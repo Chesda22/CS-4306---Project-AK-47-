@@ -19,18 +19,15 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
+          ios: { position: 'absolute' },
           default: {},
         }),
       }}>
       <Tabs.Screen
-        name="index"
+        name="index" // Your Carbon Calculator is in index.jsx
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Carbon Calculator',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="leaf.fill" color={color} />,
         }}
       />
       <Tabs.Screen
