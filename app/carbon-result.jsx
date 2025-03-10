@@ -32,40 +32,40 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#001F3F', // Dark blue background
+        backgroundColor: '#001F3F', 
         justifyContent: 'center'
     },
     header: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#FFD700', // Yellow text for contrast
+        color: '#FFD700', 
         textAlign: 'center',
         marginBottom: 15
     },
     totalBox: {
-        backgroundColor: '#FFD700', // Yellow background for total box
+        backgroundColor: '#FFD700', 
         padding: 15,
         borderRadius: 8,
         marginBottom: 15,
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#FFFFFF', // White border for contrast
+        borderColor: '#FFFFFF', 
     },
     totalLabel: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#001F3F', // Dark blue text inside the yellow box
+        color: '#001F3F', 
     },
     totalValue: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#001F3F', // Dark blue text for total value
+        color: '#001F3F', 
     },
     resultText: {
         fontSize: 16,
-        color: '#FFFFFF', // White text for readability
+        color: '#FFFFFF', 
         textAlign: 'left',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)', // Semi-transparent white
+        backgroundColor: 'rgba(255, 255, 255, 0.1)', 
         padding: 15,
         borderRadius: 8,
         borderWidth: 1,
