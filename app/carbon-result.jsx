@@ -1,9 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { generateTips } from '../utils/tips';
+
 
 const CarbonResult = () => {
     const { total, breakdown } = useLocalSearchParams();
+    const userData = JSON.parse(breakdown);
+    const tips = generateTips(userData);
 
     return (
         <View style={styles.container}>
@@ -17,6 +21,18 @@ const CarbonResult = () => {
 
             {/* Breakdown of emissions */}
             <Text style={styles.resultText}>{breakdown}</Text>
+
+            <Text style={styles.header}>Helpful Tips</Text>
+            <View style={{ backgroundColor: '#003366', padding: 15, borderRadius: 8, marginBottom: 15 }}>
+              {tips.length === 0 ? (
+                <Text style={{ color: '#FFD700' }}>No tips generated. Check your input.</Text>
+              ) : (
+                tips.map((tip, index) => (
+                  <Text key={index} style={{ color: '#FFFFFF', marginBottom: 5 }}>• {tip}</Text>
+                ))
+              )}
+            </View>
+
 
             {/* Button to go back to the calculator */}
             <TouchableOpacity style={styles.button} onPress={() => router.back()}>
