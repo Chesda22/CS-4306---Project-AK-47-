@@ -67,6 +67,7 @@ const CarbonCalculator = () => {
         breakdown: JSON.stringify(userData)
               }
         });
+    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
