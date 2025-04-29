@@ -9,6 +9,8 @@ const CarbonResult = () => {
     const userData = JSON.parse(breakdown);
     console.log("🟢 userData received in CarbonResult:", userData);
     const tips = generateTips(userData);
+    console.log("🟢 Tips generated:", tips);
+
 
     return (
         <View style={styles.container}>
