@@ -59,20 +59,14 @@ const CarbonCalculator = () => {
               publicTransport: parseFloat(publicTransport),
               recycles: parseFloat(recycledWaste) > 0,};
 
-            router.push({
-              pathname: '/CarbonResult',
-              params: {
-                total: totalEmissions.toFixed(2),
-                breakdown: JSON.stringify(userData)
-              }
-            });
-
 
         router.push({
-            pathname: "/carbon-result",
-            params: { total: totalEmissions.toFixed(2), breakdown }
+          pathname: '/CarbonResult',
+          params: {
+            total: totalEmissions.toFixed(2),
+        breakdown: JSON.stringify(userData)
+              }
         });
-    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -93,27 +87,35 @@ const CarbonCalculator = () => {
                 />
             </View>
 
-            <Text style={styles.header}>Carbon Footprint Calculator</Text>
+            <Text style={styles.sectionHeader}>🧮 Carbon Footprint Calculator</Text>
 
-            {/* Inputs */}
-            <Text style={styles.label}>Electricity Usage (kWh/month)</Text>
-            <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter kWh" value={electricity} onChangeText={setElectricity} />
+            <View style={styles.card}>
+                <Text style={styles.inputLabel}>🔌 Electricity Usage (kWh/month)</Text>
+                <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter kWh" value={electricity} onChangeText={setElectricity} />
+            </View>
 
-            <Text style={styles.label}>Gasoline Usage (liters/month)</Text>
-            <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter liters" value={gasoline} onChangeText={setGasoline} />
+            <View style={styles.card}>
+                <Text style={styles.inputLabel}>⛽ Gasoline Usage (liters/month)</Text>
+                <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter liters" value={gasoline} onChangeText={setGasoline} />
+            </View>
 
-            <Text style={styles.label}>Meat Consumption (kg/month)</Text>
-            <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter kg" value={meatConsumption} onChangeText={setMeatConsumption} />
+            <View style={styles.card}>
+                <Text style={styles.inputLabel}>🍖 Meat Consumption (kg/month)</Text>
+                <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter kg" value={meatConsumption} onChangeText={setMeatConsumption} />
+            </View>
 
-            <Text style={styles.label}>Public Transport Usage (km/month)</Text>
-            <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter km" value={publicTransport} onChangeText={setPublicTransport} />
+            <View style={styles.card}>
+                <Text style={styles.inputLabel}>🚇 Public Transport Usage (km/month)</Text>
+                <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter km" value={publicTransport} onChangeText={setPublicTransport} />
+            </View>
 
-            <Text style={styles.label}>Recycled Waste (kg/month)</Text>
-            <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter kg" value={recycledWaste} onChangeText={setRecycledWaste} />
+            <View style={styles.card}>
+                <Text style={styles.inputLabel}>♻️ Recycled Waste (kg/month)</Text>
+                <TextInput style={styles.input} keyboardType="numeric" placeholder="Enter kg" value={recycledWaste} onChangeText={setRecycledWaste} />
+            </View>
 
-            {/* Custom Styled Calculate Button */}
-            <TouchableOpacity style={styles.button} onPress={calculateEmissions}>
-                <Text style={styles.buttonText}>Calculate</Text>
+            <TouchableOpacity style={styles.calculateButton} onPress={calculateEmissions}>
+                <Text style={styles.buttonText}>🚀 Calculate</Text>
             </TouchableOpacity>
         </ScrollView>
     );
@@ -167,9 +169,6 @@ const styles = StyleSheet.create({
         borderTopColor: 'white',
         transform: [{ rotate: '180deg' }], // Flip to point at Layla
     },
-    textContainer: {
-        alignItems: 'flex-start',
-    },
     greeting: {
         fontSize: 18,
         fontWeight: 'bold',
@@ -178,5 +177,56 @@ const styles = StyleSheet.create({
     subText: {
         fontSize: 14,
         color: '#003366'
+    },
+    sectionHeader: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#003366',
+        marginBottom: 20,
+        textAlign: 'center'
+    },
+    card: {
+        backgroundColor: '#ffffff',
+        padding: 15,
+        marginBottom: 15,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    inputLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        marginBottom: 5,
+        color: '#003366'
+    },
+    input: {
+        backgroundColor: '#f0f8ff',
+        padding: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        fontSize: 16
+    },
+    calculateButton: {
+        backgroundColor: '#003366',
+        paddingVertical: 14,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
     }
 });
