@@ -1,5 +1,3 @@
-// app/(tabs)/index.jsx
-
 import React, { useState, useEffect } from 'react';
 import {
   Text,
@@ -20,12 +18,12 @@ import Animated, {
 
 const Layla = require('@/assets/images/Layla.jpeg');
 
-const CarbonCalculator = () => {
-  const [electricity, setElectricity] = useState('');
-  const [gasoline, setGasoline] = useState('');
+export default function CarbonCalculator() {
+  const [electricity, setElectricity]       = useState('');
+  const [gasoline, setGasoline]             = useState('');
   const [meatConsumption, setMeatConsumption] = useState('');
   const [publicTransport, setPublicTransport] = useState('');
-  const [recycledWaste, setRecycledWaste] = useState('');
+  const [recycledWaste, setRecycledWaste]   = useState('');
 
   // Layla floating animation
   const laylaPosition = useSharedValue(0);
@@ -38,13 +36,13 @@ const CarbonCalculator = () => {
       -1,
       true
     );
-  }, [laylaPosition]); // Added dependency
+  }, [laylaPosition]);
 
   const animatedLaylaStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: laylaPosition.value }]
   }));
 
-  // calculateEmissions handler
+  // Handler: compute emissions and navigate
   const calculateEmissions = () => {
     const eEm = isNaN(parseFloat(electricity))     ? 0 : parseFloat(electricity)     * 0.92;
     const gEm = isNaN(parseFloat(gasoline))        ? 0 : parseFloat(gasoline)        * 2.31;
@@ -59,23 +57,25 @@ const CarbonCalculator = () => {
       gasoline,
       meatMeals: meatConsumption,
       publicTransport,
-      recycles: parseFloat(recycledWaste) > 0
+      recycles: parseFloat(recycledWaste) > 0,
     };
 
-     router.push({
+    router.push({
       pathname: '/carbon-result',
       params: {
-      total: totalEmissions.toFixed(2),
-      breakdown: JSON.stringify(userData)
-      }
-  });
+        total: totalEmissions.toFixed(2),
+        breakdown: JSON.stringify(userData),
+      },
+    });
+  };
 
+  // ← component’s UI return must be _outside_ calculateEmissions
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Layla Greeting */}
       <View style={styles.headerContainer}>
         <View style={styles.speechBubble}>
-          <Text style={styles.greeting}>Hi, I'm Layla!</Text>
+          <Text style={styles.greeting}>Hi, I’m Layla!</Text>
           <Text style={styles.subText}>I will be your carbon calculator.</Text>
           <View style={styles.bubbleTail} />
         </View>
@@ -87,7 +87,7 @@ const CarbonCalculator = () => {
 
       <Text style={styles.sectionHeader}>🧮 Carbon Footprint Calculator</Text>
 
-      {[
+      {[ 
         ['🔌 Electricity (kWh)', electricity, setElectricity],
         ['⛽ Gasoline (L)',      gasoline,    setGasoline],
         ['🍖 Meat (kg)',         meatConsumption, setMeatConsumption],
@@ -114,9 +114,7 @@ const CarbonCalculator = () => {
       </TouchableOpacity>
     </ScrollView>
   );
-};
-
-export default CarbonCalculator;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -224,3 +222,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
