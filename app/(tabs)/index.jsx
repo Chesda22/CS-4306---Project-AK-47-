@@ -18,18 +18,16 @@ import Animated, {
   useAnimatedStyle
 } from 'react-native-reanimated';
 
-// asset
 const Layla = require('@/assets/images/Layla.jpeg');
 
 const CarbonCalculator = () => {
-  // ─────────── State ───────────
-  const [electricity, setElectricity]       = useState('');
-  const [gasoline, setGasoline]             = useState('');
+  const [electricity, setElectricity] = useState('');
+  const [gasoline, setGasoline] = useState('');
   const [meatConsumption, setMeatConsumption] = useState('');
   const [publicTransport, setPublicTransport] = useState('');
-  const [recycledWaste, setRecycledWaste]   = useState('');
+  const [recycledWaste, setRecycledWaste] = useState('');
 
-  // ─────────── Animation ───────────
+  // Layla floating animation
   const laylaPosition = useSharedValue(0);
   useEffect(() => {
     laylaPosition.value = withRepeat(
@@ -45,20 +43,20 @@ const CarbonCalculator = () => {
     transform: [{ translateY: laylaPosition.value }]
   }));
 
-  // ─────────── Handler ───────────
+  // ─── calculateEmissions handler ────────────────────────
   const calculateEmissions = () => {
-    const eEm = parseFloat(electricity)    * 0.92 || 0;
-    const gEm = parseFloat(gasoline)       * 2.31 || 0;
-    const mEm = parseFloat(meatConsumption)* 3.3  || 0;
-    const pEm = parseFloat(publicTransport)* 0.1  || 0;
-    const rEm = parseFloat(recycledWaste)  * 0.5  || 0;
+    const eEm = parseFloat(electricity)     * 0.92 || 0;
+    const gEm = parseFloat(gasoline)        * 2.31 || 0;
+    const mEm = parseFloat(meatConsumption) * 3.3  || 0;
+    const pEm = parseFloat(publicTransport) * 0.1  || 0;
+    const rEm = parseFloat(recycledWaste)   * 0.5  || 0;
 
     const totalEmissions = eEm + gEm + mEm + pEm - rEm;
 
     const userData = {
       electricity,
       gasoline,
-      meatMeals: meatConsumption,
+      meatMeals:       meatConsumption,
       publicTransport,
       recycles: parseFloat(recycledWaste) > 0
     };
@@ -70,9 +68,9 @@ const CarbonCalculator = () => {
         breakdown: JSON.stringify(userData)
       }
     });
-  };  // ← HERE we close calculateEmissions
+  };  
 
-  // ─────────── Render ───────────
+  // ─── component render ─────────────────────────────────
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerContainer}>
@@ -90,11 +88,11 @@ const CarbonCalculator = () => {
       <Text style={styles.sectionHeader}>🧮 Carbon Footprint Calculator</Text>
 
       {[
-        ['🔌 Electricity (kWh)', electricity,   setElectricity],
-        ['⛽ Gasoline (L)',       gasoline,      setGasoline],
-        ['🍖 Meat (kg)',         meatConsumption, setMeatConsumption],
-        ['🚇 Transport (km)',     publicTransport,  setPublicTransport],
-        ['♻️ Recycled (kg)',      recycledWaste,   setRecycledWaste]
+        ['🔌 Electricity (kWh)',     electricity,      setElectricity],
+        ['⛽ Gasoline (L)',          gasoline,         setGasoline],
+        ['🍖 Meat (kg)',            meatConsumption,  setMeatConsumption],
+        ['🚇 Transport (km)',       publicTransport,  setPublicTransport],
+        ['♻️ Recycled (kg)',         recycledWaste,    setRecycledWaste]
       ].map(([label, val, setter]) => (
         <View key={label} style={styles.card}>
           <Text style={styles.inputLabel}>{label}</Text>
@@ -116,114 +114,43 @@ const CarbonCalculator = () => {
       </TouchableOpacity>
     </ScrollView>
   );
-};  // ← HERE we close CarbonCalculator
+};  // ← **this** closes CarbonCalculator
 
-// ─────────── Must be top-level! ───────────
+// ——————————————————————————
+// Must be **at the top level**, after both of those braces:
 export default CarbonCalculator;
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#ADD8E6',
-    justifyContent: 'center'
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20
-  },
-  laylaImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginLeft: 10
-  },
+  container: { flexGrow: 1, padding: 20, backgroundColor: '#ADD8E6', justifyContent: 'center' },
+  headerContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  laylaImage: { width: 60, height: 60, borderRadius: 30, marginLeft: 10 },
   speechBubble: {
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 12,
-    maxWidth: '60%',
-    borderWidth: 1,
-    borderColor: '#003366',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    marginRight: 10
+    backgroundColor: 'white', padding: 12, borderRadius: 12, maxWidth: '60%',
+    borderWidth: 1, borderColor: '#003366', shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2,
+    shadowRadius: 4, marginRight: 10
   },
   bubbleTail: {
-    position: 'absolute',
-    bottom: -8,
-    right: 15,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderTopWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: 'white',
-    transform: [{ rotate: '180deg' }]
+    position: 'absolute', bottom: -8, right: 15, width: 0, height: 0,
+    borderLeftWidth: 10, borderRightWidth: 10, borderTopWidth: 10,
+    borderLeftColor: 'transparent', borderRightColor: 'transparent',
+    borderTopColor: 'white', transform: [{ rotate: '180deg' }]
   },
-  greeting: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#003366'
-  },
-  subText: {
-    fontSize: 14,
-    color: '#003366'
-  },
-  sectionHeader: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#003366',
-    marginBottom: 20,
-    textAlign: 'center'
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-    color: '#003366'
-  },
-  input: {
-    backgroundColor: '#f0f8ff',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    fontSize: 16
-  },
+  greeting:   { fontSize: 18, fontWeight: 'bold', color: '#003366' },
+  subText:    { fontSize: 14, color: '#003366' },
+  sectionHeader: { fontSize: 28, fontWeight: 'bold', color: '#003366', marginBottom: 20, textAlign: 'center' },
+  card:       { backgroundColor: '#fff', padding: 15, marginBottom: 15, borderRadius: 12,
+                borderWidth: 1, borderColor: '#ccc', shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1,
+                shadowRadius: 4, elevation: 2 },
+  inputLabel: { fontSize: 16, fontWeight: '600', marginBottom: 5, color: '#003366' },
+  input:      { backgroundColor: '#f0f8ff', padding: 10, borderRadius: 8,
+                borderWidth: 1, borderColor: '#ccc', fontSize: 16 },
   calculateButton: {
-    backgroundColor: '#003366',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5
+    backgroundColor: '#003366', paddingVertical: 14, borderRadius: 10,
+    alignItems: 'center', marginTop: 20, shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3,
+    shadowRadius: 4, elevation: 5
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold'
-  }
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
 });
