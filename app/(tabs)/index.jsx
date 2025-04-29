@@ -63,7 +63,7 @@ const CarbonCalculator = () => {
     };
 
      router.push({
-      pathname: 'carbon-result',
+      pathname: '/carbon-result',
       params: {
       total: totalEmissions.toFixed(2),
       breakdown: JSON.stringify(userData)
