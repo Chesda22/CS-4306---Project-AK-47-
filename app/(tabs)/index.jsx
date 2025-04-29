@@ -62,11 +62,13 @@ const CarbonCalculator = () => {
       recycles: parseFloat(recycledWaste) > 0
     };
 
-    router.push(
-      `/CarbonResult?total=${totalEmissions.toFixed(2)}` +
-      `&breakdown=${encodeURIComponent(JSON.stringify(userData))}`
-    );
-  };
+     router.push({
+      pathname: 'carbon-result',
+      params: {
+      total: totalEmissions.toFixed(2),
+      breakdown: JSON.stringify(userData)
+      }
+  });
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
