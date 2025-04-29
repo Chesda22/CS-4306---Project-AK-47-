@@ -5,26 +5,43 @@ import Animated, { useSharedValue, withTiming, useAnimatedStyle } from 'react-na
 import { generateTips } from '../utils/tips';
 
 const CarbonResult = () => {
+  // Grab the params
   const { total, breakdown } = useLocalSearchParams();
-  const userData = JSON.parse(breakdown);
+
+  // Parse and remap your inputs for generateTips
+  const {
+    electricity,
+    gasoline,
+    publicTransport,
+    meatMeals,
+    recycles
+  } = JSON.parse(breakdown);
+
+  // --- REMAPPED userData for generateTips ---
+  const userData = {
+    electricity:   parseFloat(electricity),
+    drivingMiles:  parseFloat(gasoline),         // was gasoline → now feeding drivingMiles
+    flights:       parseFloat(publicTransport),  // was publicTransport → now feeding flights
+    meatMeals:     parseFloat(meatMeals),
+    recycles:      Boolean(recycles),
+  };
+
   const tips = generateTips(userData);
 
   // Animation for success message
   const successOpacity = useSharedValue(0);
-
   useEffect(() => {
     successOpacity.value = withTiming(1, { duration: 1500 });
   }, []);
-
-  const successStyle = useAnimatedStyle(() => ({
-    opacity: successOpacity.value
-  }));
+  const successStyle = useAnimatedStyle(() => ({ opacity: successOpacity.value }));
 
   return (
     <View style={styles.container}>
       {/* Success Animated Message */}
       <Animated.View style={[styles.successMessage, successStyle]}>
-        <Text style={styles.successText}>🎉 Congratulations! You calculated your footprint!</Text>
+        <Text style={styles.successText}>
+          🎉 Congratulations! You calculated your footprint!
+        </Text>
       </Animated.View>
 
       <Text style={styles.sectionHeader}>🌍 Your Carbon Footprint Report</Text>
@@ -42,15 +59,22 @@ const CarbonResult = () => {
       <Text style={styles.tipHeader}>💡 Helpful Tips</Text>
       <View style={styles.tipCard}>
         {tips.length === 0 ? (
-          <Text style={styles.noTipText}>No tips generated. Try different inputs!</Text>
+          <Text style={styles.noTipText}>
+            No tips generated. Try different inputs!
+          </Text>
         ) : (
           tips.map((tip, index) => (
-            <Text key={index} style={styles.tipText}>• {tip}</Text>
+            <Text key={index} style={styles.tipText}>
+              • {tip}
+            </Text>
           ))
         )}
       </View>
 
-      <TouchableOpacity style={styles.calculateButton} onPress={() => router.back()}>
+      <TouchableOpacity
+        style={styles.calculateButton}
+        onPress={() => router.back()}
+      >
         <Text style={styles.buttonText}>🔄 Calculate Again</Text>
       </TouchableOpacity>
     </View>
