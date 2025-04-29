@@ -52,6 +52,22 @@ const CarbonCalculator = () => {
             `• Recycled Waste: ${recycledWaste} kg × -0.5 kg CO₂ = -${recyclingReduction.toFixed(2)} kg CO₂\n` +
             `• Total Carbon Footprint: ${totalEmissions.toFixed(2)} kg CO₂`;
 
+        const userData = {
+              electricity: parseFloat(electricity),
+              gasoline: parseFloat(gasoline),
+              meatMeals: parseFloat(meatConsumption),
+              publicTransport: parseFloat(publicTransport),
+              recycles: parseFloat(recycledWaste) > 0,};
+
+            router.push({
+              pathname: '/CarbonResult',
+              params: {
+                total: totalEmissions.toFixed(2),
+                breakdown: JSON.stringify(userData)
+              }
+            });
+
+
         router.push({
             pathname: "/carbon-result",
             params: { total: totalEmissions.toFixed(2), breakdown }
