@@ -7,6 +7,7 @@ import { generateTips } from '../utils/tips';
 const CarbonResult = () => {
     const { total, breakdown } = useLocalSearchParams();
     const userData = JSON.parse(breakdown);
+    console.log("🟢 userData received in CarbonResult:", userData);
     const tips = generateTips(userData);
 
     return (
