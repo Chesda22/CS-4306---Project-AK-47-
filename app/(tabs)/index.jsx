@@ -15,7 +15,10 @@ import Animated, {
   withTiming,
   useAnimatedStyle
 } from 'react-native-reanimated';
-import { generateTips } from './(utils)/tips';  // adjust path as needed
+
+// from app/carbon-result.jsx → go into (tabs)/(utils)/tips.js
+import { generateTips } from './(tabs)/(utils)/tips';
+
 
 const Layla = require('@/assets/images/Layla.png');
 
