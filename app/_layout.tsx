@@ -1,3 +1,4 @@
+// app/_layout.tsx
 import React from 'react';
 import { useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
@@ -9,7 +10,6 @@ import {
 } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 
-// Combine Paper and Navigation themes
 const CombinedLightTheme = {
   ...NavDefaultTheme,
   ...PaperDefaultTheme,
