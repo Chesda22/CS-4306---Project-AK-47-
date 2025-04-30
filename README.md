@@ -48,3 +48,67 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+# 🌿 Carbon Footprint Calculator
+
+A React Native + Expo app that helps users estimate their carbon footprint based on energy, travel, and lifestyle habits — complete with tips, comparisons, gamified scoring, and tree offset suggestions.
+
+## ✨ Features
+
+- 🔢 **Carbon Emissions Calculator** for electricity, gasoline, meat, transport, and recycling
+- 💡 **Smart Tips Generator** — personalized advice to reduce emissions
+- 📊 **Breakdown Report** — emission source-by-source
+- 🌍 **World & National Comparison** — see how you stack up
+- 🏅 **Gamified Badges** — "Green Champion", "Eco-Warrior", etc.
+- 🌳 **Tree Offset Estimator** — shows how many trees you'd need
+- 🎉 **Animated Confetti** and fade-in success message
+- 🌗 **Light/Dark Mode Support**
+
+## 📱 Screenshots
+
+> (You can drag & drop screenshots here once you have them.)
+
+## 🚀 Getting Started
+
+1. Clone the repo:
+```bash
+git clone https://github.com/Chesda22/CS-4306---Project-AK-47-.git
+```
+
+2. Install dependencies:
+```bash
+cd CS-4306---Project-AK-47-
+npm install
+```
+
+3. Run the project with Expo:
+```bash
+npx expo start
+```
+
+4. Scan the QR code using the **Expo Go** app on your phone
+
+## 📦 Tech Stack
+
+- React Native (via Expo)
+- React Navigation / expo-router
+- Reanimated 2
+- Confetti Cannon
+
+## 🧠 Logic Behind the Scenes
+
+- Emission factors: fixed multipliers based on input types
+- Score logic: compares user's CO₂ kg/year to world/US averages
+- Badges: simple if/else based on thresholds
+- Tips: generated using simple conditions
+
+
+
+## 📜 License
+
+MIT License — free to use and modify for educational purposes.
+
+---
+
+> "Sustainability starts with awareness — and awareness starts here."
