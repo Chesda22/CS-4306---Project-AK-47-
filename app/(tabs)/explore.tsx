@@ -112,7 +112,7 @@ const Explore = () => {
 
       {/* Tree image with animation */}
       <Animated.Image
-        source={require('@/assets/images/tree.png')}
+        source={require('@/assets/images/tree-1524116693MIN.png')}
         style={[styles.treeImage, animatedTreeStyle]}
         resizeMode="contain"
       />
