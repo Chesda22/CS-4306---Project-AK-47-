@@ -8,6 +8,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const [showBadge, setShowBadge] = useState(false);
 
+  // 🔁 Check if AI Chat has been visited
   useEffect(() => {
     const checkBadge = async () => {
       const seen = await AsyncStorage.getItem('visitedChat');
@@ -16,6 +17,7 @@ export default function TabLayout() {
     checkBadge();
   }, []);
 
+  // 🔄 Remove badge when user enters AI Chat
   const handleTabPress = async ({ route }) => {
     if (route.name === 'ClimateChatBot') {
       await AsyncStorage.setItem('visitedChat', 'true');
@@ -38,7 +40,7 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
-      {/* Home */}
+      {/* 🏠 Home Tab */}
       <Tabs.Screen
         name="index"
         options={{
@@ -49,7 +51,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Explore */}
+      {/* 📚 Explore Tab */}
       <Tabs.Screen
         name="explore"
         options={{
@@ -60,7 +62,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* AI Chat */}
+      {/* 🤖 Climate ChatBot */}
       <Tabs.Screen
         name="ClimateChatBot"
         options={{
