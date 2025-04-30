@@ -1,41 +1,24 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
-import { useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [showBadge, setShowBadge] = useState(false);
-
-  // 🔁 Check if AI Chat has been visited
-  useEffect(() => {
-    const checkBadge = async () => {
-      const seen = await AsyncStorage.getItem('visitedChat');
-      setShowBadge(!seen);
-    };
-    checkBadge();
-  }, []);
-
-  // 🔄 Remove badge when user enters AI Chat
-  const handleTabPress = async ({ route }) => {
-    if (route.name === 'ClimateChatBot') {
-      await AsyncStorage.setItem('visitedChat', 'true');
-      setShowBadge(false);
-    }
-  };
 
   return (
     <Tabs
-      screenListeners={{
-        tabPress: handleTabPress
-      }}
       screenOptions={{
-        tabBarActiveTintColor: '#FFD700',
-        tabBarInactiveTintColor: '#aaa',
+        tabBarActiveTintColor: '#28B67E',           // Active tab color
+        tabBarInactiveTintColor: '#CCCCCC',         // Inactive tab color
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
         tabBarStyle: {
-          backgroundColor: '#001F3F',
-          borderTopColor: '#FFD700',
+          backgroundColor: colorScheme === 'dark' ? '#0D1321' : '#FFFFFF',
+          borderTopColor: '#28B67E',
+          height: 60,
+          paddingBottom: 5,
         },
         headerShown: false,
       }}
@@ -46,38 +29,19 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          )
+            <Ionicons name="home" size={size} color={color} />
+          ),
         }}
       />
 
-      {/* 📚 Explore Tab */}
+      {/* 🌿 Explore Resources Tab */}
       <Tabs.Screen
         name="explore"
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book-outline" size={size} color={color} />
-          )
-        }}
-      />
-
-      {/* 🤖 Climate ChatBot */}
-      <Tabs.Screen
-        name="ClimateChatBot"
-        options={{
-          title: 'AI Chat 🤖',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles-outline" size={size} color={color} />
+            <Ionicons name="leaf-outline" size={size} color={color} />
           ),
-          tabBarBadge: showBadge ? 'NEW' : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: '#FFD700',
-            color: '#001F3F',
-            fontWeight: 'bold',
-            fontSize: 11,
-            paddingHorizontal: 4
-          }
         }}
       />
     </Tabs>
