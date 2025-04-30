@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const Layla = require("@/assets/images/Layla.jpeg");
+const Layla = require("@/assets/images/Layla.png");
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
