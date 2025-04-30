@@ -16,7 +16,7 @@ export const sendToGPT = async (userInput) => {
       }),
     });
 
-    const data = await response.json();
+
     const text = await response.text();
     console.log("🔎 Raw response:", text);
     const data = JSON.parse(text);
