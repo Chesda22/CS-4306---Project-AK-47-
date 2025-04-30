@@ -4,7 +4,7 @@
     "slug": "CarbonBrain",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Layla.jpeg",
+    "icon": "./assets/images/Layla.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
