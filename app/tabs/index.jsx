@@ -69,7 +69,6 @@ export default function CarbonCalculator() {
     });
   };
 
-  // ← component’s UI return must be _outside_ calculateEmissions
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Layla Greeting */}
