@@ -1,27 +1,25 @@
-import axios from 'axios';
-
-
-const API_KEY = 'sk-c9e74287ca3d46178c455ea9708813d8';
-const API_URL = 'https://api.openai.com/v1/chat/completions'; // works with DeepSeek too
-
-export const sendToGPT = async (text) => {
-  const response = await axios.post(
-    API_URL,
-    {
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant specialized in climate change and carbon footprint guidance.' },
-        { role: 'user', content: text }
-      ],
-      temperature: 0.7
-    },
-    {
+export const sendToGPT = async (userInput) => {
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  );
+        'Authorization': 'sk-c9e74287ca3d46178c455ea9708813d8', // ← replace this
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant for climate and carbon footprint questions.' },
+          { role: 'user', content: userInput },
+        ],
+        temperature: 0.7,
+      }),
+    });
 
-  return response.data.choices[0].message.content.trim();
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (error) {
+    console.error('Error fetching from DeepSeek:', error);
+    return '⚠️ Failed to get a response from the chatbot.';
+  }
 };
