@@ -82,40 +82,35 @@ An educational and interactive React Native Expo app that helps users estimate t
 - Calculates how many trees are needed to offset your footprint.
 - Example: "You’d need to plant 40 trees to offset your emissions."
 
-## 📚 Explore Tab (New!)
 
-An interactive resource center with animated tabs:
+## 📚 Explore Tab (Updated!)
 
-### 🖼 Photos
-- Greenhouse gas imagery and environmental visuals.
+A vibrant and interactive **learning hub** that complements the carbon calculator.
 
-### 🔗 Useful Links
-- NASA Climate, IPCC, EPA climate reports.
+### 🌱 Tree Animation  
+- A tree image gently **grows in** when the tab loads or a quote refreshes.
+- Symbolizes sustainability visually.
 
-### 📖 Book Recommendations
-- "This Changes Everything" – Naomi Klein
-- "The Uninhabitable Earth" – David Wallace-Wells
-- "How to Avoid a Climate Disaster" – Bill Gates
+### 💬 Quote of the Day  
+- Fetches inspiring environmental quotes from the ZenQuotes API.  
+- ✨ Smooth fade animation on refresh.  
+- 📦 Automatically cached offline using `AsyncStorage`.
 
-### 🌱 Environmental Organizations
-- 350.org
-- Greenpeace
-- WWF
+### 🖼 Random Climate Photos  
+- Shows **2 high-resolution environmental images** on each load.  
+- Pulled from Unsplash for a fresh experience every time.
 
-### ✨ Quote of the Day
-- Daily environmental quote fetched from an API.
-- Smooth fade-in/fade-out animation.
-- Offline caching with AsyncStorage.
-- 🔄 Refresh button to get a new quote.
+### 🔗 Resources Organized in Tabs  
+Includes four content tabs:
+- **Photos**: Rotating real-world climate imagery.
+- **Links**: Educational websites like NASA, IPCC, and EPA.
+- **Books**: Climate change literature from experts like Naomi Klein and Bill Gates.
+- **Organizations**: Tap to explore global groups like WWF and Greenpeace.
 
-## 🚀 Tech Stack
-- React Native + Expo
-- react-native-chart-kit
-- react-native-reanimated
-- AsyncStorage (quote caching)
+### 🧭 Smooth Tab Transitions  
+- Animated **sliding underline** to indicate the active tab.
+- Responsive layout for mobile readability.
 
-## 📸 Screenshots
-(Insert screenshots here if available)
 
 
 
