@@ -9,31 +9,39 @@ import {
   Linking,
   Animated,
   Easing,
-  ActivityIndicator
+  ActivityIndicator,
+  Dimensions
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const tabs = ['Photos', 'Links', 'Books', 'Organizations'];
+const screenWidth = Dimensions.get('window').width;
 
 const Explore = () => {
   const [activeTab, setActiveTab] = useState('Photos');
-  const fadeAnim = useState(new Animated.Value(0))[0];
-  const quoteFadeAnim = useRef(new Animated.Value(1)).current;
   const [quote, setQuote] = useState('Loading inspirational quote...');
   const [loading, setLoading] = useState(true);
+  const quoteFadeAnim = useRef(new Animated.Value(1)).current;
+  const underlineAnim = useRef(new Animated.Value(0)).current;
 
-  const handleTabChange = (tab) => {
-    fadeAnim.setValue(0);
-    setActiveTab(tab);
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true
-    }).start();
+  const fetchQuote = async () => {
+    try {
+      setLoading(true);
+      animateQuote();
+      const res = await fetch('https://api.quotable.io/random?tags=environment|wisdom');
+      const data = await res.json();
+      const formatted = `❝ ${data.content} ❞\n— ${data.author}`;
+      setQuote(formatted);
+      await AsyncStorage.setItem('cachedQuote', formatted);
+    } catch {
+      const cached = await AsyncStorage.getItem('cachedQuote');
+      setQuote(cached || '🌱 “Sustainability starts with awareness.”');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const animateQuoteChange = () => {
+  const animateQuote = () => {
     Animated.sequence([
       Animated.timing(quoteFadeAnim, {
         toValue: 0,
@@ -42,27 +50,20 @@ const Explore = () => {
       }),
       Animated.timing(quoteFadeAnim, {
         toValue: 1,
-        duration: 300,
+        duration: 400,
         useNativeDriver: true
       })
     ]).start();
   };
 
-  const fetchQuote = async () => {
-    try {
-      setLoading(true);
-      animateQuoteChange();
-      const response = await fetch('https://api.quotable.io/random?tags=environment|wisdom');
-      const data = await response.json();
-      const quoteText = `❝ ${data.content} ❞\n— ${data.author}`;
-      await AsyncStorage.setItem('cachedQuote', quoteText);
-      setQuote(quoteText);
-    } catch (error) {
-      const cached = await AsyncStorage.getItem('cachedQuote');
-      setQuote(cached || '“Sustainability starts with awareness.”');
-    } finally {
-      setLoading(false);
-    }
+  const handleTabChange = (tab, index) => {
+    setActiveTab(tab);
+    Animated.timing(underlineAnim, {
+      toValue: index * (screenWidth / tabs.length),
+      duration: 300,
+      easing: Easing.out(Easing.exp),
+      useNativeDriver: false
+    }).start();
   };
 
   useEffect(() => {
@@ -71,65 +72,82 @@ const Explore = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🌍 Explore More About Climate Impact</Text>
+      <Text style={styles.header}>🌍 Explore Climate Awareness</Text>
 
       <View style={styles.quoteBox}>
         {loading ? (
           <ActivityIndicator color="#FFD700" />
         ) : (
-          <Animated.Text style={[styles.quoteText, { opacity: quoteFadeAnim }]}>{quote}</Animated.Text>
+          <Animated.Text style={[styles.quoteText, { opacity: quoteFadeAnim }]}>
+            {quote}
+          </Animated.Text>
         )}
         <TouchableOpacity onPress={fetchQuote} style={styles.refreshButton}>
-          <Text style={styles.refreshText}>🔄 Refresh Quote</Text>
+          <Text style={styles.refreshText}>🔄 New Quote</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabRow}>
-        {tabs.map(tab => (
+        {tabs.map((tab, index) => (
           <TouchableOpacity
             key={tab}
-            style={[styles.tabButton, activeTab === tab && styles.activeTab]}
-            onPress={() => handleTabChange(tab)}
+            onPress={() => handleTabChange(tab, index)}
+            style={styles.tabTouchable}
           >
-            <Text style={styles.tabText}>{tab}</Text>
+            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+              {tab}
+            </Text>
           </TouchableOpacity>
         ))}
+        <Animated.View
+          style={[
+            styles.underline,
+            {
+              left: underlineAnim,
+              width: screenWidth / tabs.length
+            }
+          ]}
+        />
       </View>
 
-      <Animated.View style={[styles.contentBox, { opacity: fadeAnim }]}>
-        <ScrollView>
-          {activeTab === 'Photos' && (
-            <>
-              <Image source={{ uri: 'https://climate.nasa.gov/system/content_pages/main_images/50_earths_city_lights.jpg' }} style={styles.imageCard} />
-              <Image source={{ uri: 'https://cdn.pixabay.com/photo/2022/03/10/15/52/smokestacks-7059454_1280.jpg' }} style={styles.imageCard} />
-            </>
-          )}
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {activeTab === 'Photos' && (
+          <>
+            <Image
+              source={{ uri: 'https://climate.nasa.gov/system/content_pages/main_images/50_earths_city_lights.jpg' }}
+              style={styles.imageCard}
+            />
+            <Image
+              source={{ uri: 'https://cdn.pixabay.com/photo/2022/03/10/15/52/smokestacks-7059454_1280.jpg' }}
+              style={styles.imageCard}
+            />
+          </>
+        )}
 
-          {activeTab === 'Links' && (
-            <>
-              <Text style={styles.link} onPress={() => Linking.openURL('https://climate.nasa.gov/')}>🌐 NASA Climate</Text>
-              <Text style={styles.link} onPress={() => Linking.openURL('https://www.ipcc.ch/')}>📘 IPCC Reports</Text>
-              <Text style={styles.link} onPress={() => Linking.openURL('https://www.epa.gov/climate-change')}>🏛 EPA on Climate</Text>
-            </>
-          )}
+        {activeTab === 'Links' && (
+          <>
+            <Text style={styles.link} onPress={() => Linking.openURL('https://climate.nasa.gov/')}>🌐 NASA Climate</Text>
+            <Text style={styles.link} onPress={() => Linking.openURL('https://www.ipcc.ch/')}>📘 IPCC Reports</Text>
+            <Text style={styles.link} onPress={() => Linking.openURL('https://www.epa.gov/climate-change')}>🏛 EPA Climate Info</Text>
+          </>
+        )}
 
-          {activeTab === 'Books' && (
-            <>
-              <Text style={styles.book}>📘 This Changes Everything – Naomi Klein</Text>
-              <Text style={styles.book}>📗 The Uninhabitable Earth – David Wallace-Wells</Text>
-              <Text style={styles.book}>📙 How to Avoid a Climate Disaster – Bill Gates</Text>
-            </>
-          )}
+        {activeTab === 'Books' && (
+          <>
+            <Text style={styles.card}>📘 This Changes Everything – Naomi Klein</Text>
+            <Text style={styles.card}>📗 The Uninhabitable Earth – David Wallace-Wells</Text>
+            <Text style={styles.card}>📙 How to Avoid a Climate Disaster – Bill Gates</Text>
+          </>
+        )}
 
-          {activeTab === 'Organizations' && (
-            <>
-              <Text style={styles.book} onPress={() => Linking.openURL('https://350.org')}>🌱 350.org – Climate Campaigns</Text>
-              <Text style={styles.book} onPress={() => Linking.openURL('https://www.greenpeace.org')}>🌿 Greenpeace – Global Action</Text>
-              <Text style={styles.book} onPress={() => Linking.openURL('https://www.wwf.org')}>🐼 WWF – Nature & Wildlife</Text>
-            </>
-          )}
-        </ScrollView>
-      </Animated.View>
+        {activeTab === 'Organizations' && (
+          <>
+            <Text style={styles.card} onPress={() => Linking.openURL('https://350.org')}>🌱 350.org – Climate Campaigns</Text>
+            <Text style={styles.card} onPress={() => Linking.openURL('https://www.greenpeace.org')}>🌿 Greenpeace – Global Action</Text>
+            <Text style={styles.card} onPress={() => Linking.openURL('https://www.wwf.org')}>🐼 WWF – Wildlife Protection</Text>
+          </>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -139,79 +157,84 @@ export default Explore;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
     backgroundColor: '#001F3F',
-    paddingHorizontal: 16
+    paddingTop: 60
   },
   header: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    color: '#FFD700',
     textAlign: 'center',
-    color: '#FFD700'
+    marginBottom: 15
   },
   quoteBox: {
     backgroundColor: '#003366',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FFD700'
+    marginHorizontal: 16,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderColor: '#FFD700',
+    borderWidth: 1
   },
   quoteText: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontStyle: 'italic'
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: '#fff',
+    textAlign: 'center'
   },
   refreshButton: {
-    marginTop: 10,
-    alignItems: 'center'
+    alignItems: 'center',
+    marginTop: 10
   },
   refreshText: {
     color: '#FFD700',
-    fontSize: 14,
     textDecorationLine: 'underline'
   },
   tabRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFD700',
+    position: 'relative'
   },
-  tabButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#004d80'
-  },
-  activeTab: {
-    backgroundColor: '#FFD700'
+  tabTouchable: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center'
   },
   tabText: {
-    color: '#FFFFFF',
+    color: '#aaa',
+    fontSize: 16,
     fontWeight: '600'
   },
-  contentBox: {
-    paddingBottom: 40,
-    flexGrow: 1
+  tabTextActive: {
+    color: '#FFD700'
+  },
+  underline: {
+    position: 'absolute',
+    bottom: 0,
+    height: 3,
+    backgroundColor: '#FFD700'
+  },
+  scroll: {
+    padding: 20
   },
   imageCard: {
     width: '100%',
     height: 200,
-    borderRadius: 10,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#FFD700'
+    borderRadius: 12,
+    marginBottom: 20,
+    borderColor: '#FFD700',
+    borderWidth: 2
   },
   link: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#00ccff',
-    marginBottom: 12,
-    textDecorationLine: 'underline'
+    textDecorationLine: 'underline',
+    marginBottom: 14
   },
-  book: {
+  card: {
     fontSize: 16,
-    color: '#FFFFFF',
-    marginBottom: 10
+    color: '#fff',
+    marginBottom: 12
   }
 });
