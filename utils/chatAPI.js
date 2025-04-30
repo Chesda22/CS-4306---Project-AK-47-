@@ -17,6 +17,10 @@ export const sendToGPT = async (userInput) => {
     });
 
     const data = await response.json();
+    const text = await response.text();
+    console.log("🔎 Raw response:", text);
+    const data = JSON.parse(text);
+
     return data.choices[0].message.content.trim();
   } catch (error) {
     console.error('Error fetching from DeepSeek:', error);
