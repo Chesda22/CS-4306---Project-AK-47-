@@ -15,7 +15,7 @@ import Animated, {
   withTiming,
   useAnimatedStyle
 } from 'react-native-reanimated';
-import { generateTips } from '../../utils/tips';  // adjust path as needed
+import { generateTips } from './(utils)/tips';  // adjust path as needed
 
 const Layla = require('@/assets/images/Layla.jpeg');
 
