@@ -1,11 +1,15 @@
 import React from 'react';
-import { Provider as PaperProvider, DefaultTheme as PaperDefaultTheme, DarkTheme as PaperDarkTheme } from 'react-native-paper';
-import { NavigationContainer, DefaultTheme as NavDefaultTheme, DarkTheme as NavDarkTheme } from '@react-navigation/native';
-import { Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
+import { Stack } from 'expo-router';
+import { NavigationContainer, DefaultTheme as NavDefaultTheme, DarkTheme as NavDarkTheme } from '@react-navigation/native';
+import {
+  Provider as PaperProvider,
+  DefaultTheme as PaperDefaultTheme,
+  DarkTheme as PaperDarkTheme,
+} from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 
-// Combine both themes
+// Combine Paper and Navigation themes
 const CombinedLightTheme = {
   ...NavDefaultTheme,
   ...PaperDefaultTheme,
@@ -41,8 +45,8 @@ export default function RootLayout() {
   return (
     <NavigationContainer theme={theme}>
       <PaperProvider theme={theme}>
-        <Stack screenOptions={{ headerShown: false }} />
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <Stack screenOptions={{ headerShown: false }} />
       </PaperProvider>
     </NavigationContainer>
   );
