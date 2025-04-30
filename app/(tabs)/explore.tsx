@@ -1,212 +1,332 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
+  useColorScheme,
   ScrollView,
-  Linking,
-  Image,
-  ImageBackground,
+  Dimensions,
 } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
-import { useColorScheme } from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
 import Animated, {
   useSharedValue,
-  withTiming,
   useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
 } from 'react-native-reanimated';
+import { generateTips } from '../utils/tips';
+import ConfettiCannon from 'react-native-confetti-cannon';
+import { PieChart } from 'react-native-chart-kit';
 
-// Online background image
-const backgroundImage = { uri: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=800&q=80' };
+const CarbonResult = () => {
+  const { total, breakdown } = useLocalSearchParams();
+  const screenWidth = Dimensions.get('window').width;
+  const scrollRef = useRef(null);
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
 
-const tabs = ['Links', 'Books', 'Organizations'];
+  let userData = null;
 
-const Explore = () => {
-  const [activeTab, setActiveTab] = useState('Links');
-  const transition = useSharedValue(1);
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  try {
+    if (!breakdown) throw new Error("Missing breakdown data.");
+    userData = JSON.parse(breakdown);
+  } catch (err) {
+    console.warn("🚨 Error loading breakdown:", err.message);
+  }
 
-  const handleTabSwitch = (tab) => {
-    transition.value = 0;
-    setTimeout(() => {
-      setActiveTab(tab);
-      transition.value = withTiming(1, { duration: 300 });
-    }, 100);
-  };
+  if (!userData) {
+    return (
+      <View style={[styles.container, { backgroundColor: '#001F3F', justifyContent: 'center' }]}>
+        <Text style={{ color: '#FFD700', fontSize: 18, textAlign: 'center' }}>
+          ⚠️ Unable to load your results. Please try calculating again.
+        </Text>
+        <TouchableOpacity style={[styles.calculateButton, { marginTop: 20 }]} onPress={() => router.back()}>
+          <Text style={styles.buttonText}>🔄 Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-  const fadeStyle = useAnimatedStyle(() => ({
-    opacity: transition.value,
-    transform: [{ scale: 0.98 + transition.value * 0.02 }],
+  const chartData = [
+    {
+      name: 'Electricity',
+      population: (userData.electricity ?? 0) * 0.92,
+      color: '#FFD700',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+    {
+      name: 'Gasoline',
+      population: (userData.gasoline ?? 0) * 2.31,
+      color: '#FF6F61',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+    {
+      name: 'Meat',
+      population: (userData.meatMeals ?? 0) * 3.3,
+      color: '#6A5ACD',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+    {
+      name: 'Transport',
+      population: (userData.publicTransport ?? 0) * 0.1,
+      color: '#20B2AA',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+  ];
+
+  let tips = generateTips(userData);
+  if (tips.length === 0) {
+    tips = ['Try reducing electricity or fuel usage to improve your footprint.'];
+  }
+
+  const successOpacity = useSharedValue(0);
+  const badgeScale = useSharedValue(0.8);
+  const chartOpacity = useSharedValue(0);
+  const chartScale = useSharedValue(0.8);
+
+  useEffect(() => {
+    scrollRef?.current?.scrollTo({ y: 0, animated: true });
+    successOpacity.value = withTiming(1, { duration: 1000 });
+    badgeScale.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 400 }),
+        withTiming(0.95, { duration: 400 })
+      ),
+      -1,
+      true
+    );
+    chartOpacity.value = withTiming(1, { duration: 1000 });
+    chartScale.value = withTiming(1, { duration: 1000 });
+  }, []);
+
+  const successStyle = useAnimatedStyle(() => ({
+    opacity: successOpacity.value,
   }));
 
-  const content = {
-    Links: [
-      { title: 'NASA Climate', url: 'https://climate.nasa.gov', icon: 'globe' },
-      { title: 'UN Environment Programme', url: 'https://www.unep.org', icon: 'leaf' },
-      { title: 'Carbon Footprint Calculator', url: 'https://www.carbonfootprint.com', icon: 'calculator' },
-    ],
-    Books: [
-      {
-        title: 'The Uninhabitable Earth',
-        image: 'https://images-na.ssl-images-amazon.com/images/I/81vpsIs58WL.jpg',
-      },
-      {
-        title: 'This Changes Everything',
-        image: 'https://images-na.ssl-images-amazon.com/images/I/81Kkq1zjK+L.jpg',
-      },
-      {
-        title: 'How to Avoid a Climate Disaster',
-        image: 'https://images-na.ssl-images-amazon.com/images/I/81r+LN4zGFL.jpg',
-      },
-    ],
-    Organizations: [
-      {
-        title: 'Greenpeace',
-        url: 'https://www.greenpeace.org',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/5/5d/Greenpeace_logo.svg',
-      },
-      {
-        title: '350.org',
-        url: 'https://350.org',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/6/6e/350.org_logo.svg',
-      },
-      {
-        title: 'Rainforest Alliance',
-        url: 'https://www.rainforest-alliance.org',
-        image: 'https://upload.wikimedia.org/wikipedia/en/3/3a/Rainforest_Alliance_logo.svg',
-      },
-    ],
-  };
+  const badgeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
+  }));
+
+  const chartAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: chartOpacity.value,
+    transform: [{ scale: chartScale.value }],
+  }));
+
+  const totalValue = parseFloat(total ?? '0');
+  const averageAmerican = 16000;
+  const worldAverage = 4000;
+  const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
+  const percentBetterThanWorld = 100 - (totalValue / worldAverage) * 100;
+  const treesToOffset = Math.ceil(totalValue / 22);
+
+  let badge = '';
+  if (totalValue < 5000) badge = '🏅 Green Champion!';
+  else if (totalValue < 10000) badge = '🌱 Eco-Warrior!';
+  else badge = '🚨 Needs Improvement';
 
   return (
-    <ImageBackground source={backgroundImage} style={styles.backgroundImage} blurRadius={2}>
-      <View style={[styles.container, { backgroundColor: isDark ? '#00000099' : '#FFFFFFCC' }]}>
-        <Text style={styles.header}>🌱 Explore Sustainability Resources</Text>
+    <ScrollView
+      ref={scrollRef}
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: isDark ? '#000' : '#001F3F' },
+      ]}
+    >
+      <Animated.View style={[styles.successMessage, successStyle]}>
+        <Text style={styles.successText}>🎉 Congratulations! You calculated your footprint!</Text>
+      </Animated.View>
 
-        {/* Tabs */}
-        <View style={styles.tabRow}>
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.tabButton, activeTab === tab && styles.activeTab]}
-              onPress={() => handleTabSwitch(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <ConfettiCannon
+        count={100}
+        origin={{ x: 200, y: 0 }}
+        fadeOut
+        autoStart
+        explosionSpeed={300}
+        fallSpeed={3000}
+      />
 
-        {/* Tab Content */}
-        <Animated.View style={[fadeStyle, { flex: 1 }]}>
-          <ScrollView contentContainerStyle={styles.contentContainer}>
-            {content[activeTab].map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.card}
-                onPress={() => item.url && Linking.openURL(item.url)}
-                activeOpacity={item.url ? 0.85 : 1}
-              >
-                <View style={styles.cardContent}>
-                  {item.image && (
-                    <Image
-                      source={{ uri: item.image }}
-                      style={styles.previewImage}
-                      resizeMode="contain"
-                    />
-                  )}
-                  {item.icon && !item.image && (
-                    <FontAwesome5 name={item.icon} size={18} color="#28B67E" style={styles.icon} />
-                  )}
-                  <Text style={styles.cardText}>{item.title}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </Animated.View>
+      <Text style={styles.sectionHeader}>🌍 Your Carbon Footprint Report</Text>
+
+      <View style={styles.totalCard}>
+        <Text style={styles.totalLabel}>Total Footprint</Text>
+        <Text style={styles.totalValue}>{totalValue} kg CO₂</Text>
       </View>
-    </ImageBackground>
+
+      <Text style={styles.chartHeader}>📊 Emission Breakdown</Text>
+      <Animated.View style={[{ alignItems: 'center', marginBottom: 30 }, chartAnimatedStyle]}>
+        <PieChart
+          data={chartData}
+          width={screenWidth - 20}
+          height={220}
+          chartConfig={{
+            backgroundColor: 'transparent',
+            backgroundGradientFrom: '#001F3F',
+            backgroundGradientTo: '#001F3F',
+            color: () => '#fff',
+            labelColor: () => '#fff',
+          }}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="10"
+          absolute
+        />
+      </Animated.View>
+
+      <Animated.View style={[styles.badgeCard, badgeAnimatedStyle]}>
+        <Text style={styles.badgeText}>{badge}</Text>
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>🇺🇸 Compared to U.S. Average:</Text>
+          <Text style={styles.statValue}>
+            {percentAboveUS > 0 ? `${percentAboveUS.toFixed(1)}% Higher` : `Below Average ✅`}
+          </Text>
+        </View>
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>🌍 Better than World:</Text>
+          <Text style={styles.statValue}>
+            {Math.max(0, percentBetterThanWorld.toFixed(1))}%
+          </Text>
+        </View>
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>🌳 Trees Needed:</Text>
+          <Text style={styles.statValue}>{treesToOffset} / year</Text>
+        </View>
+      </Animated.View>
+
+      <Text style={styles.tipHeader}>💡 Helpful Tips</Text>
+      <View style={styles.tipCard}>
+        {tips.map((tip, index) => (
+          <Text key={index} style={styles.tipText}>• {tip}</Text>
+        ))}
+      </View>
+
+      <TouchableOpacity style={styles.calculateButton} onPress={() => router.back()}>
+        <Text style={styles.buttonText}>🔄 Calculate Again</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
-export default Explore;
+export default CarbonResult;
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    resizeMode: 'cover',
-  },
   container: {
-    flex: 1,
-    paddingTop: 60,
-    paddingHorizontal: 16,
+    flexGrow: 1,
+    padding: 20,
+    justifyContent: 'center',
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#28B67E',
+  successMessage: {
     marginBottom: 20,
+    backgroundColor: '#FFD700',
+    padding: 12,
+    borderRadius: 10,
+  },
+  successText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#001F3F',
+    fontWeight: 'bold',
+  },
+  sectionHeader: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  totalCard: {
+    backgroundColor: '#FFD700',
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  totalLabel: {
+    fontSize: 18,
+    color: '#001F3F',
+    fontWeight: 'bold',
+  },
+  totalValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#001F3F',
+    marginTop: 8,
+  },
+  chartHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 10,
+    marginTop: -10,
+  },
+  badgeCard: {
+    backgroundColor: '#004080',
+    padding: 18,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  badgeText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#00FF99',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomColor: '#FFD700',
+    borderBottomWidth: 0.5,
+  },
+  statLabel: {
+    fontSize: 16,
+    color: '#FFD700',
+    fontWeight: '500',
+  },
+  statValue: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  tipHeader: {
+    fontSize: 22,
+    color: '#FFD700',
+    fontWeight: 'bold',
+    marginBottom: 10,
     textAlign: 'center',
   },
-  tabRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderColor: '#28B67E',
-  },
-  tabButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  activeTab: {
-    borderBottomWidth: 3,
-    borderBottomColor: '#28B67E',
-  },
-  tabText: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: '#28B67E',
-    fontWeight: 'bold',
-  },
-  contentContainer: {
-    paddingBottom: 40,
-  },
-  card: {
-    backgroundColor: '#FFFFFFDD',
+  tipCard: {
+    backgroundColor: '#003366',
+    padding: 18,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#FFD700',
   },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardText: {
+  tipText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#001F3F',
-    flexShrink: 1,
+    color: '#FFFFFF',
+    marginBottom: 8,
   },
-  icon: {
-    marginRight: 12,
+  calculateButton: {
+    backgroundColor: '#007ACC',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
   },
-  previewImage: {
-    width: 40,
-    height: 40,
-    marginRight: 12,
-    borderRadius: 6,
-    backgroundColor: '#e0e0e0',
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
