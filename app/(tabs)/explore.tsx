@@ -7,12 +7,16 @@ import {
   TouchableOpacity,
   Image,
   Linking,
-  Animated,
-  Easing,
+  Animated as RNAnimated,
   ActivityIndicator,
   Dimensions
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming
+} from 'react-native-reanimated';
 
 const tabs = ['Photos', 'Links', 'Books', 'Organizations'];
 const screenWidth = Dimensions.get('window').width;
@@ -21,16 +25,23 @@ const Explore = () => {
   const [activeTab, setActiveTab] = useState('Photos');
   const [quote, setQuote] = useState('Loading inspirational quote...');
   const [loading, setLoading] = useState(true);
-  const quoteFadeAnim = useRef(new Animated.Value(1)).current;
-  const underlineAnim = useRef(new Animated.Value(0)).current;
+  const quoteFadeAnim = useRef(new RNAnimated.Value(1)).current;
+  const underlineAnim = useRef(new RNAnimated.Value(0)).current;
+
+  // Tree Animation
+  const treeScale = useSharedValue(0);
+  const animatedTreeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: treeScale.value }],
+    opacity: treeScale.value
+  }));
 
   const fetchQuote = async () => {
     try {
       setLoading(true);
       animateQuote();
-      const res = await fetch('https://api.quotable.io/random?tags=environment|wisdom');
+      const res = await fetch('https://zenquotes.io/api/random');
       const data = await res.json();
-      const formatted = `❝ ${data.content} ❞\n— ${data.author}`;
+      const formatted = `❝ ${data[0].q} ❞\n— ${data[0].a}`;
       setQuote(formatted);
       await AsyncStorage.setItem('cachedQuote', formatted);
     } catch {
@@ -42,13 +53,13 @@ const Explore = () => {
   };
 
   const animateQuote = () => {
-    Animated.sequence([
-      Animated.timing(quoteFadeAnim, {
+    RNAnimated.sequence([
+      RNAnimated.timing(quoteFadeAnim, {
         toValue: 0,
         duration: 200,
         useNativeDriver: true
       }),
-      Animated.timing(quoteFadeAnim, {
+      RNAnimated.timing(quoteFadeAnim, {
         toValue: 1,
         duration: 400,
         useNativeDriver: true
@@ -58,35 +69,44 @@ const Explore = () => {
 
   const handleTabChange = (tab, index) => {
     setActiveTab(tab);
-    Animated.timing(underlineAnim, {
+    RNAnimated.timing(underlineAnim, {
       toValue: index * (screenWidth / tabs.length),
       duration: 300,
-      easing: Easing.out(Easing.exp),
       useNativeDriver: false
     }).start();
   };
 
   useEffect(() => {
     fetchQuote();
+    treeScale.value = withTiming(1, { duration: 2000 });
   }, []);
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>🌍 Explore Climate Awareness</Text>
 
+      {/* Tree Animation */}
+      <Animated.Image
+        source={require('@/assets/images/tree.png')}
+        style={[styles.treeImage, animatedTreeStyle]}
+        resizeMode="contain"
+      />
+
+      {/* Quote Section */}
       <View style={styles.quoteBox}>
         {loading ? (
           <ActivityIndicator color="#FFD700" />
         ) : (
-          <Animated.Text style={[styles.quoteText, { opacity: quoteFadeAnim }]}>
+          <RNAnimated.Text style={[styles.quoteText, { opacity: quoteFadeAnim }]}>
             {quote}
-          </Animated.Text>
+          </RNAnimated.Text>
         )}
         <TouchableOpacity onPress={fetchQuote} style={styles.refreshButton}>
           <Text style={styles.refreshText}>🔄 New Quote</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Tab Navigation */}
       <View style={styles.tabRow}>
         {tabs.map((tab, index) => (
           <TouchableOpacity
@@ -99,7 +119,7 @@ const Explore = () => {
             </Text>
           </TouchableOpacity>
         ))}
-        <Animated.View
+        <RNAnimated.View
           style={[
             styles.underline,
             {
@@ -110,20 +130,20 @@ const Explore = () => {
         />
       </View>
 
+      {/* Tab Content */}
       <ScrollView contentContainerStyle={styles.scroll}>
         {activeTab === 'Photos' && (
           <>
             <Image
-              source={{ uri: 'https://climate.nasa.gov/system/content_pages/main_images/50_earths_city_lights.jpg' }}
+              source={{ uri: 'https://images.unsplash.com/photo-1502303753006-8edba4b31be1?auto=format&fit=crop&w=800&q=80' }}
               style={styles.imageCard}
             />
             <Image
-              source={{ uri: 'https://cdn.pixabay.com/photo/2022/03/10/15/52/smokestacks-7059454_1280.jpg' }}
+              source={{ uri: 'https://images.unsplash.com/photo-1581091870627-3d4f50467864?auto=format&fit=crop&w=800&q=80' }}
               style={styles.imageCard}
             />
           </>
         )}
-
         {activeTab === 'Links' && (
           <>
             <Text style={styles.link} onPress={() => Linking.openURL('https://climate.nasa.gov/')}>🌐 NASA Climate</Text>
@@ -131,7 +151,6 @@ const Explore = () => {
             <Text style={styles.link} onPress={() => Linking.openURL('https://www.epa.gov/climate-change')}>🏛 EPA Climate Info</Text>
           </>
         )}
-
         {activeTab === 'Books' && (
           <>
             <Text style={styles.card}>📘 This Changes Everything – Naomi Klein</Text>
@@ -139,7 +158,6 @@ const Explore = () => {
             <Text style={styles.card}>📙 How to Avoid a Climate Disaster – Bill Gates</Text>
           </>
         )}
-
         {activeTab === 'Organizations' && (
           <>
             <Text style={styles.card} onPress={() => Linking.openURL('https://350.org')}>🌱 350.org – Climate Campaigns</Text>
@@ -166,6 +184,12 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     textAlign: 'center',
     marginBottom: 15
+  },
+  treeImage: {
+    width: 140,
+    height: 140,
+    alignSelf: 'center',
+    marginBottom: 10
   },
   quoteBox: {
     backgroundColor: '#003366',
