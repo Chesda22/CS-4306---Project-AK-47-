@@ -24,17 +24,54 @@ const CarbonResult = () => {
   const { total, breakdown } = useLocalSearchParams();
   const screenWidth = Dimensions.get('window').width;
   const scrollRef = useRef(null);
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
 
+  const breakdownSafe = breakdown ?? '{}'; // fallback if undefined
   let userData = null;
   try {
-    userData = JSON.parse(breakdown);
+    userData = JSON.parse(breakdownSafe);
   } catch (err) {
     console.error('Failed to parse breakdown:', breakdown);
   }
 
-  const tips = userData ? generateTips(userData) : [];
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+  // Safe chart data fallback
+  const chartData = userData ? [
+    {
+      name: 'Electricity',
+      population: (userData.electricity ?? 0) * 0.92,
+      color: '#FFD700',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+    {
+      name: 'Gasoline',
+      population: (userData.gasoline ?? 0) * 2.31,
+      color: '#FF6F61',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+    {
+      name: 'Meat',
+      population: (userData.meatMeals ?? 0) * 3.3,
+      color: '#6A5ACD',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+    {
+      name: 'Transport',
+      population: (userData.publicTransport ?? 0) * 0.1,
+      color: '#20B2AA',
+      legendFontColor: '#FFF',
+      legendFontSize: 14,
+    },
+  ] : [];
+
+  // Tips
+  let tips = userData ? generateTips(userData) : [];
+  if (tips.length === 0) {
+    tips = ['Try reducing electricity or fuel usage to improve your footprint.'];
+  }
 
   // Animations
   const successOpacity = useSharedValue(0);
@@ -70,7 +107,8 @@ const CarbonResult = () => {
     transform: [{ scale: chartScale.value }],
   }));
 
-  const totalValue = parseFloat(total);
+  // Calculations
+  const totalValue = parseFloat(total ?? '0');
   const averageAmerican = 16000;
   const worldAverage = 4000;
   const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
@@ -107,44 +145,14 @@ const CarbonResult = () => {
 
       <View style={styles.totalCard}>
         <Text style={styles.totalLabel}>Total Footprint</Text>
-        <Text style={styles.totalValue}>{total} kg CO₂</Text>
+        <Text style={styles.totalValue}>{totalValue} kg CO₂</Text>
       </View>
 
       <Text style={styles.chartHeader}>📊 Emission Breakdown</Text>
-
       {userData && (
         <Animated.View style={[{ alignItems: 'center', marginBottom: 30 }, chartAnimatedStyle]}>
           <PieChart
-            data={[
-              {
-                name: 'Electricity',
-                population: userData.electricity * 0.92,
-                color: '#FFD700',
-                legendFontColor: '#FFF',
-                legendFontSize: 14,
-              },
-              {
-                name: 'Gasoline',
-                population: userData.gasoline * 2.31,
-                color: '#FF6F61',
-                legendFontColor: '#FFF',
-                legendFontSize: 14,
-              },
-              {
-                name: 'Meat',
-                population: userData.meatMeals * 3.3,
-                color: '#6A5ACD',
-                legendFontColor: '#FFF',
-                legendFontSize: 14,
-              },
-              {
-                name: 'Transport',
-                population: userData.publicTransport * 0.1,
-                color: '#20B2AA',
-                legendFontColor: '#FFF',
-                legendFontSize: 14,
-              },
-            ]}
+            data={chartData}
             width={screenWidth - 20}
             height={220}
             chartConfig={{
@@ -164,7 +172,6 @@ const CarbonResult = () => {
 
       <Animated.View style={[styles.badgeCard, badgeAnimatedStyle]}>
         <Text style={styles.badgeText}>{badge}</Text>
-
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>🇺🇸 Compared to U.S. Average:</Text>
           <Text style={styles.statValue}>
@@ -173,14 +180,12 @@ const CarbonResult = () => {
               : `Below Average ✅`}
           </Text>
         </View>
-
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>🌍 Better than World:</Text>
           <Text style={styles.statValue}>
             {Math.max(0, percentBetterThanWorld.toFixed(1))}%
           </Text>
         </View>
-
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>🌳 Trees Needed:</Text>
           <Text style={styles.statValue}>{treesToOffset} / year</Text>
@@ -189,13 +194,9 @@ const CarbonResult = () => {
 
       <Text style={styles.tipHeader}>💡 Helpful Tips</Text>
       <View style={styles.tipCard}>
-        {tips.length === 0 ? (
-          <Text style={styles.noTipText}>No tips generated. Try different inputs!</Text>
-        ) : (
-          tips.map((tip, index) => (
-            <Text key={index} style={styles.tipText}>• {tip}</Text>
-          ))
-        )}
+        {tips.map((tip, index) => (
+          <Text key={index} style={styles.tipText}>• {tip}</Text>
+        ))}
       </View>
 
       <TouchableOpacity style={styles.calculateButton} onPress={() => router.back()}>
@@ -309,11 +310,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     marginBottom: 8,
-  },
-  noTipText: {
-    fontSize: 16,
-    color: '#FFD700',
-    textAlign: 'center',
   },
   calculateButton: {
     backgroundColor: '#007ACC',
