@@ -17,7 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { generateTips } from './(utils)/tips';  // adjust path as needed
 
-const Layla = require('@/assets/images/Layla.jpeg');
+const Layla = require('@/assets/images/Layla.png');
 
 export default function CarbonCalculator() {
   // Form state
