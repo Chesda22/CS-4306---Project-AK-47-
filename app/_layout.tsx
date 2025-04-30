@@ -27,19 +27,21 @@ export default function RootLayout() {
     return null;
   }
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Tabs Layout (index.jsx & explore.jsx are inside (tabs)) */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+return (
+  <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <Stack screenOptions={{ headerShown: false }}>
+      {/* Tabs Layout (index.jsx & explore.jsx are inside (tabs)) */}
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-        {/* Carbon Result Screen */}
-        <Stack.Screen name="carbon-result" />
+      {/* Carbon Result Screen */}
+      <Stack.Screen name="carbon-result" />
 
-        {/* Fallback: Not Found Screen */}
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
-}
+      {/* ✅ NEW: Climate AI ChatBot */}
+      <Stack.Screen name="ClimateChatBot" />
+
+      {/* Fallback: Not Found Screen */}
+      <Stack.Screen name="+not-found" />
+    </Stack>
+    <StatusBar style="auto" />
+  </ThemeProvider>
+);
