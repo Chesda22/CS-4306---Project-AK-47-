@@ -2,22 +2,7 @@ export const generateTips = (data) => {
   const tips = [];
 
   // Driving
-  if (data.drivingMiles > 100) {
-    tips.push("Drive less — try walking, biking, or carpooling sometimes.");
-  }
 
-  if (data.drivingMiles > 200) {
-    tips.push("Cutting down how much you drive can really help the planet.");
-  }
-
-  // Flying
-  if (data.flights > 5) {
-    tips.push("Try to fly less or combine trips when you can.");
-  }
-
-  if (data.flights > 10) {
-    tips.push("Planting trees can help balance out your flight emissions.");
-  }
 
   // Electricity
   if (data.electricity > 150) {
