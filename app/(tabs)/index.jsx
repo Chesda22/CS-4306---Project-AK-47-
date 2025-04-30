@@ -1,259 +1,244 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  View
-} from 'react-native';
-import { router } from 'expo-router';
-import Animated, {
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-  useAnimatedStyle
-} from 'react-native-reanimated';
+import { Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, View, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import Animated, { useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
-// from app/carbon-result.jsx → go into (tabs)/(utils)/tips.js
-import { generateTips } from '@/utils/tips';
+const Layla = require("@/assets/images/Layla.jpeg");
 
-const Layla = require('@/assets/images/Layla.png');
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export default function CarbonCalculator() {
-  // Form state
-  const [electricity, setElectricity]         = useState('');
-  const [gasoline, setGasoline]               = useState('');
-  const [meatConsumption, setMeatConsumption] = useState('');
-  const [publicTransport, setPublicTransport] = useState('');
-  const [recycledWaste, setRecycledWaste]     = useState('');
+const CarbonCalculator = () => {
+    const [electricity, setElectricity] = useState('');
+    const [gasoline, setGasoline] = useState('');
+    const [meatConsumption, setMeatConsumption] = useState('');
+    const [publicTransport, setPublicTransport] = useState('');
+    const [recycledWaste, setRecycledWaste] = useState('');
 
-  // Tips state
-  const [tips, setTips]                       = useState([]);
+    const router = useRouter();
 
-  // Layla floating animation
-  const laylaPosition = useSharedValue(0);
-  useEffect(() => {
-    laylaPosition.value = withRepeat(
-      withSequence(
-        withTiming(-5, { duration: 1000 }),
-        withTiming(5, { duration: 1000 })
-      ),
-      -1,
-      true
-    );
-  }, [laylaPosition]);
+    // Layla Floating Animation
+    const laylaPosition = useSharedValue(0);
 
-  const animatedLaylaStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: laylaPosition.value }]
-  }));
+    useEffect(() => {
+        laylaPosition.value = withRepeat(
+            withSequence(
+                withTiming(-8, { duration: 1000 }),
+                withTiming(8, { duration: 1000 })
+            ),
+            -1,
+            true
+        );
+    }, [laylaPosition]);
 
-  // Handler: compute emissions, generate tips, and navigate
-  const calculateEmissions = () => {
-    const eEm = isNaN(parseFloat(electricity))     ? 0 : parseFloat(electricity)     * 0.92;
-    const gEm = isNaN(parseFloat(gasoline))        ? 0 : parseFloat(gasoline)        * 2.31;
-    const mEm = isNaN(parseFloat(meatConsumption)) ? 0 : parseFloat(meatConsumption) * 3.3;
-    const pEm = isNaN(parseFloat(publicTransport)) ? 0 : parseFloat(publicTransport) * 0.1;
-    const rEm = isNaN(parseFloat(recycledWaste))   ? 0 : parseFloat(recycledWaste)   * 0.5;
+    const animatedLaylaStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: laylaPosition.value }],
+    }));
 
-    const totalEmissions = eEm + gEm + mEm + pEm - rEm;
+    const calculateEmissions = () => {
+        // Parse input values safely
+        const electricityValue = parseFloat(electricity) || 0;
+        const gasolineValue = parseFloat(gasoline) || 0;
+        const meatValue = parseFloat(meatConsumption) || 0;
+        const transportValue = parseFloat(publicTransport) || 0;
+        const recycledValue = parseFloat(recycledWaste) || 0;
+        
+        // Calculate emissions
+        const electricityEmissions = electricityValue * 0.92;
+        const gasolineEmissions = gasolineValue * 2.31;
+        const meatEmissions = meatValue * 3.3;
+        const transportEmissions = transportValue * 0.1;
+        const recyclingReduction = recycledValue * 0.5;
 
-    const userData = {
-      electricity,
-      gasoline,
-      meatMeals: meatConsumption,
-      publicTransport,
-      recycles: parseFloat(recycledWaste) > 0,
+        const totalEmissions = 
+            electricityEmissions + 
+            gasolineEmissions + 
+            meatEmissions + 
+            transportEmissions - 
+            recyclingReduction;
+
+        // Pass all values to the result page
+        router.push({
+            pathname: "/carbon-result",
+            params: {
+                total: totalEmissions.toFixed(2),
+                electricity: electricityValue.toString(),
+                gasoline: gasolineValue.toString(),
+                meat: meatValue.toString(),
+                transport: transportValue.toString(),
+                recycled: recycledValue.toString()
+            }
+        });
     };
 
-    // ★ generate tips before navigation
-    const newTips = generateTips(userData);
-    setTips(newTips);
+    return (
+        <LinearGradient colors={['#7F7FD5', '#86A8E7', '#91EAE4']} style={styles.container}>
+            <ScrollView contentContainerStyle={styles.contentContainer}>
+                {/* Layla Greeting Section */}
+                <View style={styles.headerContainer}>
+                    {/* Speech Bubble */}
+                    <View style={styles.speechBubble}>
+                        <Text style={styles.greeting}>Hi, I'm Layla!</Text>
+                        <Text style={styles.subText}>I will be your carbon calculator.</Text>
+                        <View style={styles.bubbleTail} />
+                    </View>
 
-    // navigate
-    router.push({
-      pathname: '/carbon-result',
-      params: {
-        total: totalEmissions.toFixed(2),
-        breakdown: JSON.stringify(userData),
-      },
-    });
-  };
+                    {/* Animated Layla Image */}
+                    <Animated.Image 
+                        source={Layla} 
+                        style={[styles.laylaImage, animatedLaylaStyle]} 
+                    />
+                </View>
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Layla Greeting */}
-      <View style={styles.headerContainer}>
-        <View style={styles.speechBubble}>
-          <Text style={styles.greeting}>Hi, I’m Layla!</Text>
-          <Text style={styles.subText}>I will be your carbon calculator.</Text>
-          <View style={styles.bubbleTail} />
-        </View>
-        <Animated.Image
-          source={Layla}
-          style={[styles.laylaImage, animatedLaylaStyle]}
-        />
-      </View>
+                <Text style={styles.header}>🌿 Carbon Footprint Calculator</Text>
 
-      <Text style={styles.sectionHeader}>🧮 Carbon Footprint Calculator</Text>
+                {/* Input Fields with Equal Size */}
+                <View style={styles.inputContainer}>
+                    {[
+                        { label: "Electricity Usage (kWh/month)", value: electricity, setter: setElectricity },
+                        { label: "Gasoline Usage (liters/month)", value: gasoline, setter: setGasoline },
+                        { label: "Meat Consumption (kg/month)", value: meatConsumption, setter: setMeatConsumption },
+                        { label: "Public Transport Usage (km/month)", value: publicTransport, setter: setPublicTransport },
+                        { label: "Recycled Waste (kg/month)", value: recycledWaste, setter: setRecycledWaste }
+                    ].map((item, index) => (
+                        <View key={index} style={styles.inputBox}>
+                            <Text style={styles.label}>{item.label}</Text>
+                            <TextInput
+                                style={styles.input}
+                                keyboardType="numeric"
+                                placeholder={`Enter ${item.label.split(" ")[0].toLowerCase()}`}
+                                value={item.value}
+                                onChangeText={item.setter}
+                            />
+                        </View>
+                    ))}
+                </View>
 
-      {/* Input fields */}
-      {[
-        ['🔌 Electricity (kWh)', electricity, setElectricity],
-        ['⛽ Gasoline (L)',      gasoline,    setGasoline],
-        ['🍖 Meat (kg)',         meatConsumption, setMeatConsumption],
-        ['🚇 Transport (km)',    publicTransport,  setPublicTransport],
-        ['♻️ Recycled (kg)',      recycledWaste,    setRecycledWaste]
-      ].map(([label, val, setter], idx) => (
-        <View key={idx} style={styles.card}>
-          <Text style={styles.inputLabel}>{label}</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            placeholder="Enter value"
-            value={val}
-            onChangeText={setter}
-          />
-        </View>
-      ))}
+                {/* Calculate Button */}
+                <TouchableOpacity style={styles.button} onPress={calculateEmissions}>
+                    <Text style={styles.buttonText}>Calculate 🌍</Text>
+                </TouchableOpacity>
+            </ScrollView>
+        </LinearGradient>
+    );
+};
 
-      {/* ★ Tips List */}
-      {tips.length > 0 && (
-        <View style={styles.tipContainer}>
-          {tips.map((tip, i) => (
-            <Text key={i} style={styles.tipText}>• {tip}</Text>
-          ))}
-        </View>
-      )}
-
-      {/* Calculate Button */}
-      <TouchableOpacity
-        style={styles.calculateButton}
-        onPress={calculateEmissions}
-      >
-        <Text style={styles.buttonText}>🚀 Calculate</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
-}
+export default CarbonCalculator;
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#ADD8E6',
-    justifyContent: 'center',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  laylaImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginLeft: 10,
-  },
-  speechBubble: {
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 12,
-    maxWidth: '60%',
-    borderWidth: 1,
-    borderColor: '#003366',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    marginRight: 10,
-  },
-  bubbleTail: {
-    position: 'absolute',
-    bottom: -8,
-    right: 15,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 10,
-    borderRightWidth: 10,
-    borderTopWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: 'white',
-    transform: [{ rotate: '180deg' }],
-  },
-  greeting: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#003366',
-  },
-  subText: {
-    fontSize: 14,
-    color: '#003366',
-  },
-  sectionHeader: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#003366',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: '#fff',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-    color: '#003366',
-  },
-  input: {
-    backgroundColor: '#f0f8ff',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    fontSize: 16,
-  },
-  tipContainer: {
-    backgroundColor: '#fff',
-    padding: 15,
-    marginBottom: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#003366',
-  },
-  tipText: {
-    fontSize: 16,
-    marginBottom: 8,
-    color: '#003366',
-  },
-  calculateButton: {
-    backgroundColor: '#003366',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
+    container: {
+        flex: 1,
+    },
+    contentContainer: {
+        flexGrow: 1,
+        padding: 20,
+        paddingBottom: 200, 
+        alignItems: 'center',
+    },
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        padding: 15,
+        borderRadius: 20,
+    },
+    laylaImage: {
+        width: 80,  
+        height: 80,
+        borderRadius: 40,
+        marginLeft: 10
+    },
+    speechBubble: {
+        backgroundColor: 'white',
+        padding: 12,
+        borderRadius: 12,
+        maxWidth: '60%',
+        position: 'relative',
+        borderWidth: 1,
+        borderColor: '#003366',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        marginRight: 10,
+    },
+    bubbleTail: {
+        position: 'absolute',
+        bottom: -10,
+        right: 20,
+        width: 0,
+        height: 0,
+        borderLeftWidth: 10,
+        borderRightWidth: 10,
+        borderTopWidth: 10,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: 'white',
+        transform: [{ rotate: '180deg' }],
+    },
+    greeting: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#003366'
+    },
+    subText: {
+        fontSize: 14,
+        color: '#003366'
+    },
+    header: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#fff',
+        textAlign: 'center',
+        marginBottom: 20,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 2, height: 2 },
+        textShadowRadius: 3,
+    },
+    inputContainer: {
+        width: SCREEN_WIDTH * 0.9,
+        alignItems: 'center',
+    },
+    inputBox: {
+        width: '100%',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: 15,
+        borderRadius: 12,
+        marginBottom: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 5
+    },
+    input: {
+        fontSize: 16,
+        borderBottomWidth: 2,
+        borderBottomColor: '#007ACC',
+        paddingVertical: 5,
+        color: '#333',
+    },
+    button: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 15,
+        paddingHorizontal: 40,
+        borderRadius: 25,
+        marginTop: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+    }
 });
