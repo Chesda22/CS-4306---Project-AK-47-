@@ -1,65 +1,123 @@
-import { Text, View, StyleSheet, ImageBackground, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Linking
+} from 'react-native';
 
-const Layla = require("@/assets/images/Layla.png"); 
+const tabs = ['Photos', 'Links', 'Books', 'Organizations'];
 
-const CarbonBrain = () => {  
-    return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <ImageBackground 
-                source={Layla}
-                resizeMode="cover"
-                style={styles.headerImage}
-            >
-                <Text style={styles.headerText}> Carbon Brain Carbon Calculator </Text>
-            </ImageBackground>
+const Explore = () => {
+  const [activeTab, setActiveTab] = useState('Photos');
 
-            <View style={styles.infoContainer}>
-                <Text style={styles.title}>How Carbon Emissions Are Calculated:</Text>
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>🌍 Explore More About Climate Impact</Text>
 
-                <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Electricity Usage:</Text> Measured in kWh, with an emission factor of **0.92 kg CO₂ per kWh**, depending on energy sources.</Text>
-                <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Gasoline Consumption:</Text> Measured in liters, with an emission factor of **2.31 kg CO₂ per liter**, accounting for combustion emissions from fuel.</Text>
-                <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Meat Consumption:</Text> Measured in kg, with an estimated factor of **3.3 kg CO₂ per kg of meat**, varying by type (beef has a higher footprint than poultry).</Text>
-                <Text style={styles.bulletPoint}>• <Text style={styles.bold}>Total Carbon Footprint:</Text> Sum of emissions from electricity, gasoline, and meat consumption, providing an estimate of monthly CO₂ output.</Text>
-            </View>
-        </ScrollView>
-    );
-}
+      <View style={styles.tabRow}>
+        {tabs.map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tabButton, activeTab === tab && styles.activeTab]}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={styles.tabText}>{tab}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-export default CarbonBrain;
+      <ScrollView contentContainerStyle={styles.contentBox}>
+        {activeTab === 'Photos' && (
+          <>
+            <Image source={{ uri: 'https://climate.nasa.gov/system/content_pages/main_images/50_earths_city_lights.jpg' }} style={styles.imageCard} />
+            <Image source={{ uri: 'https://cdn.pixabay.com/photo/2022/03/10/15/52/smokestacks-7059454_1280.jpg' }} style={styles.imageCard} />
+          </>
+        )}
+
+        {activeTab === 'Links' && (
+          <>
+            <Text style={styles.link} onPress={() => Linking.openURL('https://climate.nasa.gov/')}>NASA Climate</Text>
+            <Text style={styles.link} onPress={() => Linking.openURL('https://www.ipcc.ch/')}>IPCC Reports</Text>
+            <Text style={styles.link} onPress={() => Linking.openURL('https://www.epa.gov/climate-change')}>EPA on Climate</Text>
+          </>
+        )}
+
+        {activeTab === 'Books' && (
+          <>
+            <Text style={styles.book}>📘 This Changes Everything – Naomi Klein</Text>
+            <Text style={styles.book}>📗 The Uninhabitable Earth – David Wallace-Wells</Text>
+            <Text style={styles.book}>📙 How to Avoid a Climate Disaster – Bill Gates</Text>
+          </>
+        )}
+
+        {activeTab === 'Organizations' && (
+          <>
+            <Text style={styles.book} onPress={() => Linking.openURL('https://350.org')}>🌱 350.org – Climate Campaigns</Text>
+            <Text style={styles.book} onPress={() => Linking.openURL('https://www.greenpeace.org')}>🌿 Greenpeace – Global Action</Text>
+            <Text style={styles.book} onPress={() => Linking.openURL('https://www.wwf.org')}>🐼 WWF – Nature & Wildlife</Text>
+          </>
+        )}
+      </ScrollView>
+    </View>
+  );
+};
+
+export default Explore;
 
 const styles = StyleSheet.create({
-    container: {
-        flexGrow: 1,
-        backgroundColor: '#ADD8E6', // Light blue background color
-        paddingBottom: 20
-    },
-    headerImage: {
-        width: '100%',
-        height: 200,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    headerText: {
-        color: 'white',
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        padding: 10
-    },
-    infoContainer: {
-        padding: 20
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 10
-    },
-    bulletPoint: {
-        fontSize: 16,
-        marginBottom: 8
-    },
-    bold: {
-        fontWeight: 'bold'
-    }
+  container: {
+    flex: 1,
+    paddingTop: 60,
+    backgroundColor: '#e6f7ff',
+    paddingHorizontal: 16
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#003366'
+  },
+  tabRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16
+  },
+  tabButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: '#cce7ff'
+  },
+  activeTab: {
+    backgroundColor: '#007acc'
+  },
+  tabText: {
+    color: '#003366',
+    fontWeight: '600'
+  },
+  contentBox: {
+    paddingBottom: 40
+  },
+  imageCard: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 16
+  },
+  link: {
+    fontSize: 16,
+    color: '#0066cc',
+    marginBottom: 12,
+    textDecorationLine: 'underline'
+  },
+  book: {
+    fontSize: 16,
+    color: '#003366',
+    marginBottom: 10
+  }
 });
