@@ -11,6 +11,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import Animated, { useSharedValue, withTiming, useAnimatedStyle } from 'react-native-reanimated';
 import { generateTips } from '../utils/tips';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import { PieChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
 
 const CarbonResult = () => {
   const { total, breakdown } = useLocalSearchParams();
@@ -46,6 +48,40 @@ const CarbonResult = () => {
     opacity: successOpacity.value,
   }));
 
+  const screenWidth = Dimensions.get('window').width;
+// Chart Data
+  const chartData = [
+  {
+    name: 'Electricity',
+    population: userData.electricity * 0.92,
+    color: '#FFD700',
+    legendFontColor: '#FFF',
+    legendFontSize: 14
+  },
+  {
+    name: 'Gasoline',
+    population: userData.gasoline * 2.31,
+    color: '#FF6F61',
+    legendFontColor: '#FFF',
+    legendFontSize: 14
+  },
+  {
+    name: 'Meat',
+    population: userData.meatMeals * 3.3,
+    color: '#6A5ACD',
+    legendFontColor: '#FFF',
+    legendFontSize: 14
+  },
+  {
+    name: 'Transport',
+    population: userData.publicTransport * 0.1,
+    color: '#20B2AA',
+    legendFontColor: '#FFF',
+    legendFontSize: 14
+  }
+];
+
+
   return (
     <ScrollView ref={scrollRef} contentContainerStyle={[styles.container, { backgroundColor: isDark ? '#000' : '#001F3F' }]}>
       <Animated.View style={[styles.successMessage, successStyle]}>
@@ -60,6 +96,26 @@ const CarbonResult = () => {
         <Text style={styles.totalLabel}>Total Footprint</Text>
         <Text style={styles.totalValue}>{total} kg CO₂</Text>
       </View>
+      <Text style={styles.chartHeader}>📊 Emission Breakdown</Text>
+        <View style={{ alignItems: 'center', marginBottom: 30 }}>
+          <PieChart
+            data={chartData}
+            width={screenWidth - 20}
+            height={220}
+            chartConfig={{
+              backgroundColor: 'transparent',
+              backgroundGradientFrom: '#001F3F',
+              backgroundGradientTo: '#001F3F',
+              color: () => '#fff',
+              labelColor: () => '#fff',
+            }}
+            accessor="population"
+            backgroundColor="transparent"
+            paddingLeft="10"
+            absolute
+          />
+        </View>
+
 
       <View style={styles.breakdownCard}>
         <Text style={styles.breakdownHeader}>Breakdown of Emissions:</Text>
@@ -231,4 +287,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  chartHeader: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#FFD700',
+  textAlign: 'center',
+  marginBottom: 10,
+  marginTop: -10
+},
+
 });
