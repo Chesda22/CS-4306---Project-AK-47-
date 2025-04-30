@@ -173,18 +173,29 @@ const CarbonResult = () => {
 
       <Animated.View style={[styles.badgeCard, badgeAnimatedStyle]}>
         <Text style={styles.badgeText}>{badge}</Text>
-        <Text style={styles.comparisonText}>
-          {percentAboveUS > 0
-            ? `📊 Your footprint is ${percentAboveUS.toFixed(1)}% higher than the average American.`
-            : `✅ Your footprint is below the U.S. average!`}
-        </Text>
-        <Text style={styles.comparisonText}>
-          🌍 You are doing better than {Math.max(0, percentBetterThanWorld.toFixed(1))}% of people in the world.
-        </Text>
-        <Text style={styles.comparisonText}>
-          🌳 You would need to plant {treesToOffset} trees this year to offset your footprint.
-        </Text>
-      </Animated.View>
+      
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>🇺🇸 Compared to U.S. Average:</Text>
+          <Text style={styles.statValue}>
+            {percentAboveUS > 0
+              ? `${percentAboveUS.toFixed(1)}% Higher`
+              : `Below Average ✅`}
+          </Text>
+        </View>
+      
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>🌍 Better than World:</Text>
+          <Text style={styles.statValue}>
+            {Math.max(0, percentBetterThanWorld.toFixed(1))}%
+          </Text>
+        </View>
+
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>🌳 Trees Needed:</Text>
+          <Text style={styles.statValue}>{treesToOffset} / year</Text>
+        </View>
+    </Animated.View>
+
 
       <Text style={styles.tipHeader}>💡 Helpful Tips</Text>
       <View style={styles.tipCard}>
