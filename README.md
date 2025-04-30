@@ -50,58 +50,72 @@ Join our community of developers creating universal apps.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
 
 
-# 🌿 Carbon Footprint Calculator
+# Carbon Footprint Calculator App
 
-A React Native + Expo app that helps users estimate their carbon footprint based on energy, travel, and lifestyle habits — complete with tips, comparisons, gamified scoring, and tree offset suggestions.
+An educational and interactive React Native Expo app that helps users estimate their monthly carbon footprint, gain awareness, and learn how to improve their sustainability impact.
 
-## ✨ Features
+## 🌟 Features
 
-- 🔢 **Carbon Emissions Calculator** for electricity, gasoline, meat, transport, and recycling
-- 💡 **Smart Tips Generator** — personalized advice to reduce emissions
-- 📊 **Breakdown Report** — emission source-by-source
-- 🌍 **World & National Comparison** — see how you stack up
-- 🏅 **Gamified Badges** — "Green Champion", "Eco-Warrior", etc.
-- 🌳 **Tree Offset Estimator** — shows how many trees you'd need
-- 🎉 **Animated Confetti** and fade-in success message
-- 🌗 **Light/Dark Mode Support**
+### 🔢 Footprint Calculator
+- Input electricity, gasoline, meat consumption, public transport, and recycling habits.
+- Calculates CO₂ emissions with real-world conversion factors.
 
-## 📱 Screenshots
+### 📊 Emission Visualization
+- Pie chart breakdown of emission sources (electricity, gasoline, meat, transport).
+- Clear total with visually appealing result cards.
 
-> (You can drag & drop screenshots here once you have them.)
+### 🧠 Tips Generator
+- Provides practical, tailored tips based on user input.
+- Encourages small habit changes for a lower footprint.
 
-## 🚀 Getting Started
+### 🏆 Badge System
+- Users earn badges like:
+  - 🏅 Green Champion (< 5 tons/year)
+  - 🌱 Eco-Warrior (5–10 tons/year)
+  - 🚨 Needs Improvement (> 15 tons/year)
 
-1. Clone the repo:
-```bash
-git clone https://github.com/Chesda22/CS-4306---Project-AK-47-.git
-```
+### 📈 Comparisons
+- Shows how the user's footprint compares to national and world averages.
+- Example: "Your footprint is 20% higher than the average American."
 
-2. Install dependencies:
-```bash
-cd CS-4306---Project-AK-47-
-npm install
-```
+### 🌳 Offset Estimator
+- Calculates how many trees are needed to offset your footprint.
+- Example: "You’d need to plant 40 trees to offset your emissions."
 
-3. Run the project with Expo:
-```bash
-npx expo start
-```
+## 📚 Explore Tab (New!)
 
-4. Scan the QR code using the **Expo Go** app on your phone
+An interactive resource center with animated tabs:
 
-## 📦 Tech Stack
+### 🖼 Photos
+- Greenhouse gas imagery and environmental visuals.
 
-- React Native (via Expo)
-- React Navigation / expo-router
-- Reanimated 2
-- Confetti Cannon
+### 🔗 Useful Links
+- NASA Climate, IPCC, EPA climate reports.
 
-## 🧠 Logic Behind the Scenes
+### 📖 Book Recommendations
+- "This Changes Everything" – Naomi Klein
+- "The Uninhabitable Earth" – David Wallace-Wells
+- "How to Avoid a Climate Disaster" – Bill Gates
 
-- Emission factors: fixed multipliers based on input types
-- Score logic: compares user's CO₂ kg/year to world/US averages
-- Badges: simple if/else based on thresholds
-- Tips: generated using simple conditions
+### 🌱 Environmental Organizations
+- 350.org
+- Greenpeace
+- WWF
+
+### ✨ Quote of the Day
+- Daily environmental quote fetched from an API.
+- Smooth fade-in/fade-out animation.
+- Offline caching with AsyncStorage.
+- 🔄 Refresh button to get a new quote.
+
+## 🚀 Tech Stack
+- React Native + Expo
+- react-native-chart-kit
+- react-native-reanimated
+- AsyncStorage (quote caching)
+
+## 📸 Screenshots
+(Insert screenshots here if available)
 
 
 
