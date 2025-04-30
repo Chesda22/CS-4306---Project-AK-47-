@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet, ImageBackground, ScrollView } from 'react-native';
 
-const Forest = require("@/assets/images/Forest.webp");
+const Forest = require("@/assets/images/forest.png");
 
 const CarbonBrain = () => {  
     return (
