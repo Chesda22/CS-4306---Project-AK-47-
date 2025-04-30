@@ -1,40 +1,81 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { Ionicons } from '@expo/vector-icons';
+import { useColorScheme } from 'react-native';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const [showBadge, setShowBadge] = useState(false);
+
+  useEffect(() => {
+    const checkBadge = async () => {
+      const seen = await AsyncStorage.getItem('visitedChat');
+      setShowBadge(!seen);
+    };
+    checkBadge();
+  }, []);
+
+  const handleTabPress = async ({ route }) => {
+    if (route.name === 'ClimateChatBot') {
+      await AsyncStorage.setItem('visitedChat', 'true');
+      setShowBadge(false);
+    }
+  };
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: handleTabPress
+      }}
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#FFD700',
+        tabBarInactiveTintColor: '#aaa',
+        tabBarStyle: {
+          backgroundColor: '#001F3F',
+          borderTopColor: '#FFD700',
+        },
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: { position: 'absolute' },
-          default: {},
-        }),
-      }}>
+      }}
+    >
+      {/* Home */}
       <Tabs.Screen
-        name="index" // Your Carbon Calculator is in index.jsx
+        name="index"
         options={{
-          title: 'Carbon Calculator',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="leaf.fill" color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          )
         }}
       />
+
+      {/* Explore */}
       <Tabs.Screen
         name="explore"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book-outline" size={size} color={color} />
+          )
+        }}
+      />
+
+      {/* AI Chat */}
+      <Tabs.Screen
+        name="ClimateChatBot"
+        options={{
+          title: 'AI Chat 🤖',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubbles-outline" size={size} color={color} />
+          ),
+          tabBarBadge: showBadge ? 'NEW' : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: '#FFD700',
+            color: '#001F3F',
+            fontWeight: 'bold',
+            fontSize: 11,
+            paddingHorizontal: 4
+          }
         }}
       />
     </Tabs>
