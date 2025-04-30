@@ -1,4 +1,4 @@
-// utils/chatAPI.js
+console.log('DeepSeek key:', DEEPSEEK_KEY);
 
 import Constants from 'expo-constants';
 
