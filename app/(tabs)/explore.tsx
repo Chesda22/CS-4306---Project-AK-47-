@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet, ImageBackground, ScrollView } from 'react-native';
 
-const Layla = require("@/assets/images/Layla.jpeg"); 
+const Layla = require("@/assets/images/Layla.png"); 
 
 const CarbonBrain = () => {  
     return (
