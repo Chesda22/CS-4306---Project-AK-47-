@@ -1,32 +1,30 @@
 import React from 'react';
-import { Provider as PaperProvider, DefaultTheme, DarkTheme as PaperDarkTheme } from 'react-native-paper';
+import { Provider as PaperProvider, DefaultTheme as PaperDefaultTheme, DarkTheme as PaperDarkTheme } from 'react-native-paper';
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-// Define custom green-themed colors for Light Theme
 const CustomLightTheme = {
-  ...DefaultTheme,
+  ...PaperDefaultTheme,
   colors: {
-    ...DefaultTheme.colors,
-    primary: '#28B67E',          // vibrant green
-    accent: '#FFBA00',           // warm accent yellow
-    background: '#ECE9E9',       // neutral light background
-    surface: '#FFFFFF',          // component backgrounds
-    text: '#0D1321',             // dark elegant text
+    ...PaperDefaultTheme.colors,
+    primary: '#28B67E',
+    accent: '#FFBA00',
+    background: '#ECE9E9',
+    surface: '#FFFFFF',
+    text: '#0D1321',
   },
 };
 
-// Define custom green-themed colors for Dark Theme
 const CustomDarkTheme = {
   ...PaperDarkTheme,
   colors: {
     ...PaperDarkTheme.colors,
-    primary: '#28B67E',          // vibrant green
-    accent: '#FFBA00',           // warm accent yellow
-    background: '#0D1321',       // darker elegant background
-    surface: '#1D4C4F',          // component backgrounds (dark greenish)
-    text: '#ECE9E9',             // light text color
+    primary: '#28B67E',
+    accent: '#FFBA00',
+    background: '#0D1321',
+    surface: '#1D4C4F',
+    text: '#ECE9E9',
   },
 };
 
@@ -36,16 +34,7 @@ export default function RootLayout() {
 
   return (
     <PaperProvider theme={theme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* Tabs Layout: includes index.tsx, explore.tsx, ClimateChatBot.tsx */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-        {/* Carbon Result Page */}
-        <Stack.Screen name="carbon-result" />
-
-        {/* Not Found fallback screen */}
-        <Stack.Screen name="+not-found" />
-      </Stack>
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </PaperProvider>
   );
