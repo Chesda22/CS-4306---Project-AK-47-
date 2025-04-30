@@ -22,7 +22,14 @@ import { PieChart } from 'react-native-chart-kit';
 
 const CarbonResult = () => {
   const { total, breakdown } = useLocalSearchParams();
-  const userData = JSON.parse(breakdown);
+      let userData = {};
+        try {
+          userData = JSON.parse(breakdown);
+            } catch (err) {
+              console.error('Failed to parse breakdown:', breakdown);
+              userData = null;
+            }
+
   const tips = generateTips(userData);
   const scrollRef = useRef(null);
   const confettiRef = useRef(null);
