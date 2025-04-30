@@ -1,14 +1,16 @@
 // utils/chatAPI.js
+
 import Constants from 'expo-constants';
 
-const expoConstants = Constants.manifest ?? Constants.expoConfig;
-const DEEPSEEK_KEY = expoConstants?.extra?.deepseekApiKey;
+// Expo CLI v5+ populates expoConfig, not manifest, in local runs:
+const config = Constants.manifest ?? Constants.expoConfig;
+const DEEPSEEK_KEY = config?.extra?.deepseekApiKey;
 
 export const sendToGPT = async (userInput) => {
   console.log('DeepSeek key:', DEEPSEEK_KEY);
 
   if (!DEEPSEEK_KEY) {
-    console.error('❌ Missing DeepSeek key!');
+    console.error('❌ Missing DeepSeek API key in expoConfig.extra.deepseekApiKey');
     return '⚠️ Configuration error: missing API key.';
   }
 
