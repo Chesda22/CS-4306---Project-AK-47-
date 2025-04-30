@@ -1,3 +1,4 @@
+// Import necessary components and libraries
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -18,32 +19,50 @@ import Animated, {
   withTiming
 } from 'react-native-reanimated';
 
+// Tabs for navigation
 const tabs = ['Photos', 'Links', 'Books', 'Organizations'];
 const screenWidth = Dimensions.get('window').width;
 
+// Public climate-related photo URLs (randomized later)
+const remoteImages = [
+  'https://images.unsplash.com/photo-1581091870627-3d4f50467864?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1502303753006-8edba4b31be1?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1535916707207-35f97e715e1b?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1516912481808-3406841bd33e?auto=format&fit=crop&w=800&q=80'
+];
+
 const Explore = () => {
+  // State for current tab, quote, loading status, and photos
   const [activeTab, setActiveTab] = useState('Photos');
   const [quote, setQuote] = useState('Loading inspirational quote...');
   const [loading, setLoading] = useState(true);
+  const [randomPhotos, setRandomPhotos] = useState([]);
+
+  // Animations: quote fade and tab underline slide
   const quoteFadeAnim = useRef(new RNAnimated.Value(1)).current;
   const underlineAnim = useRef(new RNAnimated.Value(0)).current;
 
-  // Tree Animation
+  // Tree scale animation (grows in)
   const treeScale = useSharedValue(0);
   const animatedTreeStyle = useAnimatedStyle(() => ({
     transform: [{ scale: treeScale.value }],
     opacity: treeScale.value
   }));
 
+  // Fetch quote from API or cache (with fade & tree animation)
   const fetchQuote = async () => {
     try {
       setLoading(true);
-      animateQuote();
+      animateQuote();             // Fade out/in
+      treeScale.value = 0;        // Reset tree
+      treeScale.value = withTiming(1, { duration: 2000 });  // Grow again
+
       const res = await fetch('https://zenquotes.io/api/random');
       const data = await res.json();
       const formatted = `❝ ${data[0].q} ❞\n— ${data[0].a}`;
       setQuote(formatted);
-      await AsyncStorage.setItem('cachedQuote', formatted);
+      await AsyncStorage.setItem('cachedQuote', formatted); // Save offline
     } catch {
       const cached = await AsyncStorage.getItem('cachedQuote');
       setQuote(cached || '🌱 “Sustainability starts with awareness.”');
@@ -52,6 +71,7 @@ const Explore = () => {
     }
   };
 
+  // Quote fade animation
   const animateQuote = () => {
     RNAnimated.sequence([
       RNAnimated.timing(quoteFadeAnim, {
@@ -67,6 +87,7 @@ const Explore = () => {
     ]).start();
   };
 
+  // When user switches tabs
   const handleTabChange = (tab, index) => {
     setActiveTab(tab);
     RNAnimated.timing(underlineAnim, {
@@ -76,23 +97,27 @@ const Explore = () => {
     }).start();
   };
 
+  // On first load: fetch quote, show tree, randomize photos
   useEffect(() => {
     fetchQuote();
     treeScale.value = withTiming(1, { duration: 2000 });
+    const shuffled = [...remoteImages].sort(() => Math.random() - 0.5).slice(0, 2);
+    setRandomPhotos(shuffled);
   }, []);
 
   return (
     <View style={styles.container}>
+      {/* Page title */}
       <Text style={styles.header}>🌍 Explore Climate Awareness</Text>
 
-      {/* Tree Animation */}
+      {/* Tree image with animation */}
       <Animated.Image
         source={require('@/assets/images/tree.png')}
         style={[styles.treeImage, animatedTreeStyle]}
         resizeMode="contain"
       />
 
-      {/* Quote Section */}
+      {/* Quote section */}
       <View style={styles.quoteBox}>
         {loading ? (
           <ActivityIndicator color="#FFD700" />
@@ -106,7 +131,7 @@ const Explore = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Tab Navigation */}
+      {/* Tabs for content switching */}
       <View style={styles.tabRow}>
         {tabs.map((tab, index) => (
           <TouchableOpacity
@@ -130,39 +155,55 @@ const Explore = () => {
         />
       </View>
 
-      {/* Tab Content */}
+      {/* Tab Content Area */}
       <ScrollView contentContainerStyle={styles.scroll}>
         {activeTab === 'Photos' && (
           <>
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1502303753006-8edba4b31be1?auto=format&fit=crop&w=800&q=80' }}
-              style={styles.imageCard}
-            />
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1581091870627-3d4f50467864?auto=format&fit=crop&w=800&q=80' }}
-              style={styles.imageCard}
-            />
+            {randomPhotos.map((url, idx) => (
+              <Image key={idx} source={{ uri: url }} style={styles.imageCard} />
+            ))}
           </>
         )}
+
         {activeTab === 'Links' && (
           <>
-            <Text style={styles.link} onPress={() => Linking.openURL('https://climate.nasa.gov/')}>🌐 NASA Climate</Text>
-            <Text style={styles.link} onPress={() => Linking.openURL('https://www.ipcc.ch/')}>📘 IPCC Reports</Text>
-            <Text style={styles.link} onPress={() => Linking.openURL('https://www.epa.gov/climate-change')}>🏛 EPA Climate Info</Text>
+            <View style={styles.bookCard}>
+              <Text style={styles.card} onPress={() => Linking.openURL('https://climate.nasa.gov/')}>🌐 NASA Climate</Text>
+            </View>
+            <View style={styles.bookCard}>
+              <Text style={styles.card} onPress={() => Linking.openURL('https://www.ipcc.ch/')}>📘 IPCC Reports</Text>
+            </View>
+            <View style={styles.bookCard}>
+              <Text style={styles.card} onPress={() => Linking.openURL('https://www.epa.gov/climate-change')}>🏛 EPA Climate Info</Text>
+            </View>
           </>
         )}
+
         {activeTab === 'Books' && (
           <>
-            <Text style={styles.card}>📘 This Changes Everything – Naomi Klein</Text>
-            <Text style={styles.card}>📗 The Uninhabitable Earth – David Wallace-Wells</Text>
-            <Text style={styles.card}>📙 How to Avoid a Climate Disaster – Bill Gates</Text>
+            <View style={styles.bookCard}>
+              <Text style={styles.card}>📘 This Changes Everything – Naomi Klein</Text>
+            </View>
+            <View style={styles.bookCard}>
+              <Text style={styles.card}>📗 The Uninhabitable Earth – David Wallace-Wells</Text>
+            </View>
+            <View style={styles.bookCard}>
+              <Text style={styles.card}>📙 How to Avoid a Climate Disaster – Bill Gates</Text>
+            </View>
           </>
         )}
+
         {activeTab === 'Organizations' && (
           <>
-            <Text style={styles.card} onPress={() => Linking.openURL('https://350.org')}>🌱 350.org – Climate Campaigns</Text>
-            <Text style={styles.card} onPress={() => Linking.openURL('https://www.greenpeace.org')}>🌿 Greenpeace – Global Action</Text>
-            <Text style={styles.card} onPress={() => Linking.openURL('https://www.wwf.org')}>🐼 WWF – Wildlife Protection</Text>
+            <View style={styles.bookCard}>
+              <Text style={styles.card} onPress={() => Linking.openURL('https://350.org')}>🌱 350.org – Climate Campaigns</Text>
+            </View>
+            <View style={styles.bookCard}>
+              <Text style={styles.card} onPress={() => Linking.openURL('https://www.greenpeace.org')}>🌿 Greenpeace – Global Action</Text>
+            </View>
+            <View style={styles.bookCard}>
+              <Text style={styles.card} onPress={() => Linking.openURL('https://www.wwf.org')}>🐼 WWF – Wildlife Protection</Text>
+            </View>
           </>
         )}
       </ScrollView>
@@ -250,15 +291,16 @@ const styles = StyleSheet.create({
     borderColor: '#FFD700',
     borderWidth: 2
   },
-  link: {
-    fontSize: 17,
-    color: '#00ccff',
-    textDecorationLine: 'underline',
-    marginBottom: 14
-  },
   card: {
     fontSize: 16,
-    color: '#fff',
-    marginBottom: 12
+    color: '#fff'
+  },
+  bookCard: {
+    backgroundColor: '#003366',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderColor: '#FFD700',
+    borderWidth: 1
   }
 });
