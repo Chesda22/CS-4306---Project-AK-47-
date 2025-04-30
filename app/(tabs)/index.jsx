@@ -17,7 +17,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // from app/carbon-result.jsx → go into (tabs)/(utils)/tips.js
-import { generateTips } from './(tabs)/(utils)/tips';
+import { generateTips } from '@/app/(tabs)/(utils)/tips';
+
 
 
 const Layla = require('@/assets/images/Layla.png');
