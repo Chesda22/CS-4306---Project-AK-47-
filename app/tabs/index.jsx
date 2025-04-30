@@ -15,15 +15,20 @@ import Animated, {
   withTiming,
   useAnimatedStyle
 } from 'react-native-reanimated';
+import { generateTips } from '../../utils/tips';  // adjust path as needed
 
 const Layla = require('@/assets/images/Layla.jpeg');
 
 export default function CarbonCalculator() {
-  const [electricity, setElectricity]       = useState('');
-  const [gasoline, setGasoline]             = useState('');
+  // Form state
+  const [electricity, setElectricity]         = useState('');
+  const [gasoline, setGasoline]               = useState('');
   const [meatConsumption, setMeatConsumption] = useState('');
   const [publicTransport, setPublicTransport] = useState('');
-  const [recycledWaste, setRecycledWaste]   = useState('');
+  const [recycledWaste, setRecycledWaste]     = useState('');
+
+  // Tips state
+  const [tips, setTips]                       = useState([]);
 
   // Layla floating animation
   const laylaPosition = useSharedValue(0);
@@ -42,7 +47,7 @@ export default function CarbonCalculator() {
     transform: [{ translateY: laylaPosition.value }]
   }));
 
-  // Handler: compute emissions and navigate
+  // Handler: compute emissions, generate tips, and navigate
   const calculateEmissions = () => {
     const eEm = isNaN(parseFloat(electricity))     ? 0 : parseFloat(electricity)     * 0.92;
     const gEm = isNaN(parseFloat(gasoline))        ? 0 : parseFloat(gasoline)        * 2.31;
@@ -60,6 +65,11 @@ export default function CarbonCalculator() {
       recycles: parseFloat(recycledWaste) > 0,
     };
 
+    // ★ generate tips before navigation
+    const newTips = generateTips(userData);
+    setTips(newTips);
+
+    // navigate
     router.push({
       pathname: '/carbon-result',
       params: {
@@ -86,7 +96,8 @@ export default function CarbonCalculator() {
 
       <Text style={styles.sectionHeader}>🧮 Carbon Footprint Calculator</Text>
 
-      {[ 
+      {/* Input fields */}
+      {[
         ['🔌 Electricity (kWh)', electricity, setElectricity],
         ['⛽ Gasoline (L)',      gasoline,    setGasoline],
         ['🍖 Meat (kg)',         meatConsumption, setMeatConsumption],
@@ -105,6 +116,16 @@ export default function CarbonCalculator() {
         </View>
       ))}
 
+      {/* ★ Tips List */}
+      {tips.length > 0 && (
+        <View style={styles.tipContainer}>
+          {tips.map((tip, i) => (
+            <Text key={i} style={styles.tipText}>• {tip}</Text>
+          ))}
+        </View>
+      )}
+
+      {/* Calculate Button */}
       <TouchableOpacity
         style={styles.calculateButton}
         onPress={calculateEmissions}
@@ -203,6 +224,19 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     fontSize: 16,
   },
+  tipContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginBottom: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#003366',
+  },
+  tipText: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#003366',
+  },
   calculateButton: {
     backgroundColor: '#003366',
     paddingVertical: 14,
@@ -221,4 +255,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
