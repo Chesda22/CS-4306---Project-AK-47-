@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import Animated, { useSharedValue, withTiming, useAnimatedStyle } from 'react-native-reanimated';
 // from app/carbon-result.jsx → go into (tabs)/(utils)/tips.js
-import { generateTips } from '@/app/(tabs)/(utils)/tips';
+import { generateTips } from '@/utils/tips';
 
 
 
