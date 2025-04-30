@@ -35,8 +35,5 @@
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {
-      "deepseekApiKey": "sk-c9e74287ca3d46178c455ea9708813d8"
-    }
   }
 }
