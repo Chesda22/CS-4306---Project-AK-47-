@@ -1,17 +1,24 @@
-console.log('DeepSeek key:', DEEPSEEK_KEY);
-
+// utils/chatAPI.js
 import Constants from 'expo-constants';
 
-const DEEPSEEK_KEY = Constants.manifest.extra.deepseekApiKey;
+const expoConstants = Constants.manifest ?? Constants.expoConfig;
+const DEEPSEEK_KEY = expoConstants?.extra?.deepseekApiKey;
 
 export const sendToGPT = async (userInput) => {
+  console.log('DeepSeek key:', DEEPSEEK_KEY);
+
+  if (!DEEPSEEK_KEY) {
+    console.error('❌ Missing DeepSeek key!');
+    return '⚠️ Configuration error: missing API key.';
+  }
+
   try {
     const response = await fetch(
       'https://api.deepseek.com/v1/chat/completions',
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${DEEPSEEK_KEY}`,  // ← use the Expo extra key
+          Authorization: `Bearer ${DEEPSEEK_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -29,14 +36,12 @@ export const sendToGPT = async (userInput) => {
       }
     );
 
-    // If the call failed (e.g. auth error), get the plain-text message
     if (!response.ok) {
       const errText = await response.text();
       console.error('DeepSeek API error:', errText);
       throw new Error(errText);
     }
 
-    // Parse and return the assistant's reply
     const data = await response.json();
     return data.choices?.[0]?.message?.content?.trim() ?? '';
   } catch (error) {
