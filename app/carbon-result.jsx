@@ -1,4 +1,3 @@
-// CarbonResult.jsx
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -29,18 +28,18 @@ const CarbonResult = () => {
 
   let userData = null;
   try {
-    // Try parsing from string if necessary
     userData = typeof breakdown === 'string' ? JSON.parse(breakdown) : breakdown;
-    // Validate the presence of required fields
-    if (!userData ||
+    if (
+      !userData ||
       typeof userData.electricity !== 'number' ||
       typeof userData.gasoline !== 'number' ||
       typeof userData.meatMeals !== 'number' ||
-      typeof userData.publicTransport !== 'number') {
-      throw new Error("Breakdown is invalid or missing required fields");
+      typeof userData.publicTransport !== 'number'
+    ) {
+      throw new Error('Breakdown is invalid or missing required fields');
     }
   } catch (err) {
-    console.warn("🚨 Error parsing breakdown:", err);
+    console.warn('🚨 Error parsing breakdown:', err);
     userData = null;
   }
 
@@ -66,10 +65,7 @@ const CarbonResult = () => {
     scrollRef?.current?.scrollTo({ y: 0, animated: true });
     successOpacity.value = withTiming(1, { duration: 1000 });
     badgeScale.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 400 }),
-        withTiming(0.95, { duration: 400 })
-      ),
+      withSequence(withTiming(1, { duration: 400 }), withTiming(0.95, { duration: 400 })),
       -1,
       true
     );
@@ -132,9 +128,13 @@ const CarbonResult = () => {
         <Text style={styles.totalLabel}>• Gasoline: {userData.gasoline} gallons</Text>
         <Text style={styles.totalLabel}>• Meat Meals: {userData.meatMeals}</Text>
         <Text style={styles.totalLabel}>• Public Transport: {userData.publicTransport} miles</Text>
-        <Text style={[styles.totalLabel, { marginTop: 12 }]}>💡 Personalized Tips:</Text>
+
+        <Text style={[styles.totalLabel, { marginTop: 16 }]}>💡 Personalized Tips Just for You:</Text>
         {tips.map((tip, index) => (
-          <Text key={index} style={[styles.tipText, { marginLeft: 8 }]}>• {tip}</Text>
+          <View key={index} style={styles.tipBox}>
+            <Text style={styles.tipEmoji}>🌱</Text>
+            <Text style={styles.tipEngagingText}>{tip}</Text>
+          </View>
         ))}
       </Animated.View>
 
@@ -151,7 +151,7 @@ const CarbonResult = () => {
           <Text style={styles.statValue}>{Math.max(0, percentBetterThanWorld.toFixed(1))}%</Text>
         </View>
         <View style={styles.statRow}>
-          <Text style={styles.statLabel}>🌳 Trees Needed:</Text>
+          <Text style={styles.statLabel}>🌳 Trees Needed to offset:</Text>
           <Text style={styles.statValue}>{treesToOffset} / year</Text>
         </View>
       </Animated.View>
@@ -249,10 +249,28 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  tipText: {
-    fontSize: 16,
+  tipBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#003366',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tipEmoji: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  tipEngagingText: {
+    fontSize: 15,
     color: '#FFFFFF',
-    marginBottom: 8,
+    flex: 1,
+    lineHeight: 22,
   },
   calculateButton: {
     backgroundColor: '#007ACC',
