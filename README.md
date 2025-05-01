@@ -87,22 +87,8 @@ An educational and interactive React Native Expo app that helps users estimate t
 
 A vibrant and interactive **learning hub** that complements the carbon calculator.
 
-### 🌱 Tree Animation  
-- A tree image gently **grows in** when the tab loads or a quote refreshes.
-- Symbolizes sustainability visually.
-
-### 💬 Quote of the Day  
-- Fetches inspiring environmental quotes from the ZenQuotes API.  
-- ✨ Smooth fade animation on refresh.  
-- 📦 Automatically cached offline using `AsyncStorage`.
-
-### 🖼 Random Climate Photos  
-- Shows **2 high-resolution environmental images** on each load.  
-- Pulled from Unsplash for a fresh experience every time.
-
 ### 🔗 Resources Organized in Tabs  
-Includes four content tabs:
-- **Photos**: Rotating real-world climate imagery.
+Includes three content tabs:
 - **Links**: Educational websites like NASA, IPCC, and EPA.
 - **Books**: Climate change literature from experts like Naomi Klein and Bill Gates.
 - **Organizations**: Tap to explore global groups like WWF and Greenpeace.
