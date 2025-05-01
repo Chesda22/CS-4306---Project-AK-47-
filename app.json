@@ -3,12 +3,18 @@
     "name": "CarbonBrain",
     "slug": "CarbonBrain",
     "version": "1.0.0",
+    "sdkVersion": "53.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Layla.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": { "supportsTablet": true },
+    "updates": {
+      "enabled": false
+    },
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -25,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Layla.jpeg",
+          "image": "./assets/images/Layla.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#000000"
@@ -34,6 +40,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
+    }
   }
 }
