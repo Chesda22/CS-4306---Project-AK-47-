@@ -13,7 +13,10 @@ const ProgressScreen = () => {
       try {
         const jsonValue = await AsyncStorage.getItem('carbonHistory');
         const data = jsonValue != null ? JSON.parse(jsonValue) : [];
-        setHistory(data.slice(-30).reverse());
+
+        // Sort by full timestamp
+        const sorted = data.sort((a, b) => new Date(a.date) - new Date(b.date));
+        setHistory(sorted.slice(-30).reverse());
       } catch (e) {
         console.error('Failed to load history', e);
       }
@@ -32,7 +35,10 @@ const ProgressScreen = () => {
   };
 
   const chartData = {
-    labels: history.map((entry) => entry.date),
+    labels: history.map((entry, i) => {
+      const [date, time] = entry.date.split(' ');
+      return i % 2 === 0 ? time : ''; // optional: reduce clutter
+    }),
     datasets: [
       {
         data: history.map((entry) => parseFloat(entry.total)),
@@ -71,12 +77,19 @@ const ProgressScreen = () => {
       {history.length === 0 ? (
         <Text style={styles.noData}>No progress yet. Start calculating!</Text>
       ) : (
-        history.map((entry, index) => (
-          <View key={index} style={styles.entry}>
-            <Text style={styles.date}>{entry.date}</Text>
-            <Text style={styles.value}>{entry.total} kg CO₂</Text>
-          </View>
-        ))
+        history.map((entry, index) => {
+          const [date, ...timeParts] = entry.date.split(' ');
+          const time = timeParts.join(' ');
+          return (
+            <View key={index} style={styles.entry}>
+              <View>
+                <Text style={styles.date}>{date}</Text>
+                <Text style={styles.time}>{time}</Text>
+              </View>
+              <Text style={styles.value}>{entry.total} kg CO₂</Text>
+            </View>
+          );
+        })
       )}
 
       {/* Clear Button */}
@@ -92,14 +105,14 @@ const ProgressScreen = () => {
 export default ProgressScreen;
 
 const styles = StyleSheet.create({
-    container: {
-      flexGrow: 1,
-      paddingTop: 90,          
-      paddingBottom: 300,     
-      paddingHorizontal: 20,
-      backgroundColor: '#ADD8E6',
-      alignItems: 'center',
-    },
+  container: {
+    flexGrow: 1,
+    paddingTop: 90,
+    paddingBottom: 300,
+    paddingHorizontal: 20,
+    backgroundColor: '#ADD8E6',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
@@ -132,11 +145,17 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: '#333',
+    fontWeight: 'bold',
+  },
+  time: {
+    fontSize: 12,
+    color: '#666',
   },
   value: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#4CAF50',
+    textAlign: 'right',
   },
   clearButton: {
     marginTop: 20,
