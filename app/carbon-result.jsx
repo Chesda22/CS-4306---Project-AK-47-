@@ -28,10 +28,17 @@ const CarbonResult = () => {
   const isDark = scheme === 'dark';
 
   let userData = null;
-
   try {
-    if (!breakdown) throw new Error("Missing breakdown data.");
+    if (!breakdown) throw new Error("Missing breakdown parameter");
     userData = JSON.parse(breakdown);
+    if (
+      userData.electricity === undefined ||
+      userData.gasoline === undefined ||
+      userData.meatMeals === undefined ||
+      userData.publicTransport === undefined
+    ) {
+      throw new Error("Incomplete breakdown data");
+    }
   } catch (err) {
     console.warn("🚨 Error loading breakdown:", err.message);
   }
@@ -40,7 +47,7 @@ const CarbonResult = () => {
     return (
       <View style={[styles.container, { backgroundColor: '#001F3F', justifyContent: 'center' }]}>
         <Text style={{ color: '#FFD700', fontSize: 18, textAlign: 'center' }}>
-          ⚠️ Unable to load your results. Please try calculating again.
+          ⚠️ Unable to load your results. Please calculate your footprint again.
         </Text>
         <TouchableOpacity style={[styles.calculateButton, { marginTop: 20 }]} onPress={() => router.back()}>
           <Text style={styles.buttonText}>🔄 Go Back</Text>
@@ -111,14 +118,24 @@ const CarbonResult = () => {
         fallSpeed={3000}
       />
 
-      <Text style={styles.sectionHeader}>📊 Emission Breakdown</Text>
+      <Text style={styles.sectionHeader}>🌍 Your Carbon Footprint Report</Text>
 
       <View style={styles.totalCard}>
-        <Text style={styles.totalLabel}>Electricity: {userData.electricity} kWh</Text>
-        <Text style={styles.totalLabel}>Meat Meals: {userData.meatMeals}</Text>
-        <Text style={styles.totalLabel}>Gasoline: {userData.gasoline} gallons</Text>
-        <Text style={styles.totalLabel}>Public Transport: {userData.publicTransport} miles</Text>
+        <Text style={styles.totalLabel}>Total Footprint</Text>
+        <Text style={styles.totalValue}>{totalValue} kg CO₂</Text>
       </View>
+
+      <Text style={styles.chartHeader}>📊 Emission Breakdown</Text>
+      <Animated.View style={[styles.totalCard, { alignItems: 'flex-start', padding: 24 }]}>
+        <Text style={styles.totalLabel}>• Electricity: {userData.electricity} kWh</Text>
+        <Text style={styles.totalLabel}>• Gasoline: {userData.gasoline} gallons</Text>
+        <Text style={styles.totalLabel}>• Meat Meals: {userData.meatMeals}</Text>
+        <Text style={styles.totalLabel}>• Public Transport: {userData.publicTransport} miles</Text>
+        <Text style={[styles.totalLabel, { marginTop: 12 }]}>💡 Personalized Tips:</Text>
+        {tips.map((tip, index) => (
+          <Text key={index} style={[styles.tipText, { marginLeft: 8 }]}>• {tip}</Text>
+        ))}
+      </Animated.View>
 
       <Animated.View style={[styles.badgeCard, badgeAnimatedStyle]}>
         <Text style={styles.badgeText}>{badge}</Text>
@@ -130,22 +147,13 @@ const CarbonResult = () => {
         </View>
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>🌍 Better than World:</Text>
-          <Text style={styles.statValue}>
-            {Math.max(0, percentBetterThanWorld.toFixed(1))}%
-          </Text>
+          <Text style={styles.statValue}>{Math.max(0, percentBetterThanWorld.toFixed(1))}%</Text>
         </View>
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>🌳 Trees Needed:</Text>
           <Text style={styles.statValue}>{treesToOffset} / year</Text>
         </View>
       </Animated.View>
-
-      <Text style={styles.tipHeader}>💡 Personalized Tips</Text>
-      <View style={styles.tipCard}>
-        {tips.map((tip, index) => (
-          <Text key={index} style={styles.tipText}>• {tip}</Text>
-        ))}
-      </View>
 
       <TouchableOpacity style={styles.calculateButton} onPress={() => router.back()}>
         <Text style={styles.buttonText}>🔄 Calculate Again</Text>
@@ -185,7 +193,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     padding: 20,
     borderRadius: 15,
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 20,
   },
   totalLabel: {
@@ -193,6 +201,20 @@ const styles = StyleSheet.create({
     color: '#001F3F',
     fontWeight: 'bold',
     marginBottom: 6,
+  },
+  totalValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#001F3F',
+    marginTop: 8,
+  },
+  chartHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 10,
+    marginTop: -10,
   },
   badgeCard: {
     backgroundColor: '#004080',
@@ -225,21 +247,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
-  },
-  tipHeader: {
-    fontSize: 22,
-    color: '#FFD700',
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  tipCard: {
-    backgroundColor: '#003366',
-    padding: 18,
-    borderRadius: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#FFD700',
   },
   tipText: {
     fontSize: 16,
