@@ -116,9 +116,20 @@ const CarbonResult = () => {
   const treesToOffset = Math.ceil(totalValue / 22);
 
   let badge = '';
-  if (totalValue < 5000) badge = '🏅 Green Champion!';
-  else if (totalValue < 10000) badge = '🌱 Eco-Warrior!';
-  else badge = '🚨 Needs Improvement';
+  if (totalValue < 3000) {
+    badge = '🥇 Ultra Green Hero!';
+  } else if (totalValue < 5000) {
+    badge = '🏅 Green Champion!';
+  } else if (totalValue < 8000) {
+    badge = '🌱 Eco-Warrior!';
+  } else if (totalValue < 12000) {
+    badge = '⚠️ Climate Aware – Room to Improve';
+  } else if (totalValue < 16000) {
+    badge = '🚨 Above Average – Take Action!';
+  } else {
+    badge = '🔥 High Impact – Urgent Change Needed!';
+  }
+
 
   return (
     <ScrollView
@@ -177,7 +188,8 @@ const CarbonResult = () => {
           <Text style={styles.statValue}>
             {percentAboveUS > 0
               ? `${percentAboveUS.toFixed(1)}% Higher`
-              : `Below Average ✅`}
+              : `Below 
+              Average ✅`}
           </Text>
         </View>
         <View style={styles.statRow}>
