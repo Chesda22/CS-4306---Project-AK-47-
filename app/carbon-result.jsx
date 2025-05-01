@@ -85,11 +85,13 @@ const CarbonResult = () => {
         const oldHistory = await AsyncStorage.getItem('carbonHistory');
         const parsed = oldHistory ? JSON.parse(oldHistory) : [];
 
-        const timestamp = new Date().toLocaleString(); // date + time
+        const now = new Date();
+        const timestamp = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
         const newEntry = { date: timestamp, total: totalValue.toFixed(2) };
 
-        parsed.push(newEntry); // always append
+        parsed.push(newEntry);
         await AsyncStorage.setItem('carbonHistory', JSON.stringify(parsed));
+        console.log('✅ Saved entry:', newEntry);
       } catch (e) {
         console.warn('📉 Failed to save carbon history', e);
       }
