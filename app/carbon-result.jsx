@@ -88,8 +88,15 @@ const CarbonResult = () => {
         const today = new Date().toLocaleDateString();
         const newEntry = { date: today, total: totalValue.toFixed(2) };
 
-        const updated = [...parsed, newEntry];
-        await AsyncStorage.setItem('carbonHistory', JSON.stringify(updated));
+        const existingIndex = parsed.findIndex((entry) => entry.date === today);
+
+        if (existingIndex !== -1) {
+          parsed[existingIndex] = newEntry;
+        } else {
+          parsed.push(newEntry);
+        }
+
+        await AsyncStorage.setItem('carbonHistory', JSON.stringify(parsed));
       } catch (e) {
         console.warn('📉 Failed to save carbon history', e);
       }
