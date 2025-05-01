@@ -29,9 +29,9 @@ const CarbonResult = () => {
 
   let userData = null;
   try {
-    if (!breakdown) throw new Error("Missing breakdown parameter");
-    userData = JSON.parse(breakdown);
+    userData = typeof breakdown === 'string' ? JSON.parse(breakdown) : breakdown;
     if (
+      !userData ||
       userData.electricity === undefined ||
       userData.gasoline === undefined ||
       userData.meatMeals === undefined ||
@@ -41,6 +41,7 @@ const CarbonResult = () => {
     }
   } catch (err) {
     console.warn("🚨 Error loading breakdown:", err.message);
+    userData = null;
   }
 
   if (!userData) {
