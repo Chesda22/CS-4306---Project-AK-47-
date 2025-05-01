@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -61,8 +62,41 @@ const CarbonResult = () => {
   const successOpacity = useSharedValue(0);
   const badgeScale = useSharedValue(0.8);
 
+  const totalValue = parseFloat(total ?? '0');
+  const averageAmerican = 16000;
+  const worldAverage = 4000;
+  const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
+  const percentBetterThanWorld = 100 - (totalValue / worldAverage) * 100;
+  const treesToOffset = Math.ceil(totalValue / 22);
+
+  let badge = '';
+  if (totalValue < 3000) badge = '🥇 Ultra Green Hero!';
+  else if (totalValue < 5000) badge = '🏅 Green Champion!';
+  else if (totalValue < 8000) badge = '🌱 Eco-Warrior!';
+  else if (totalValue < 12000) badge = '⚠️ Climate Aware – Room to Improve';
+  else if (totalValue < 16000) badge = '🚨 Above Average – Take Action!';
+  else badge = '🔥 High Impact – Urgent Change Needed!';
+
   useEffect(() => {
     scrollRef?.current?.scrollTo({ y: 0, animated: true });
+
+    const saveToHistory = async () => {
+      try {
+        const oldHistory = await AsyncStorage.getItem('carbonHistory');
+        const parsed = oldHistory ? JSON.parse(oldHistory) : [];
+
+        const today = new Date().toLocaleDateString();
+        const newEntry = { date: today, total: totalValue.toFixed(2) };
+
+        const updated = [...parsed, newEntry];
+        await AsyncStorage.setItem('carbonHistory', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('📉 Failed to save carbon history', e);
+      }
+    };
+
+    saveToHistory();
+
     successOpacity.value = withTiming(1, { duration: 1000 });
     badgeScale.value = withRepeat(
       withSequence(withTiming(1, { duration: 400 }), withTiming(0.95, { duration: 400 })),
@@ -78,21 +112,6 @@ const CarbonResult = () => {
   const badgeAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: badgeScale.value }],
   }));
-
-  const totalValue = parseFloat(total ?? '0');
-  const averageAmerican = 16000;
-  const worldAverage = 4000;
-  const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
-  const percentBetterThanWorld = 100 - (totalValue / worldAverage) * 100;
-  const treesToOffset = Math.ceil(totalValue / 22);
-
-  let badge = '';
-  if (totalValue < 3000) badge = '🥇 Ultra Green Hero!';
-  else if (totalValue < 5000) badge = '🏅 Green Champion!';
-  else if (totalValue < 8000) badge = '🌱 Eco-Warrior!';
-  else if (totalValue < 12000) badge = '⚠️ Climate Aware – Room to Improve';
-  else if (totalValue < 16000) badge = '🚨 Above Average – Take Action!';
-  else badge = '🔥 High Impact – Urgent Change Needed!';
 
   return (
     <ScrollView
