@@ -14,9 +14,14 @@ const ProgressScreen = () => {
         const jsonValue = await AsyncStorage.getItem('carbonHistory');
         const data = jsonValue != null ? JSON.parse(jsonValue) : [];
 
-        // Sort by full timestamp
-        const sorted = data.sort((a, b) => new Date(a.date) - new Date(b.date));
-        setHistory(sorted.slice(-30).reverse());
+        // ✅ Sort by timestamp using Date.parse (safer across platforms)
+        const sorted = data.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+
+        // ✅ Debug: check what's loaded
+        console.log("✅ Sorted history:", sorted);
+
+        // ✅ Save last 30 entries and force re-render with clone
+        setHistory([...sorted.slice(-30).reverse()]);
       } catch (e) {
         console.error('Failed to load history', e);
       }
@@ -37,11 +42,11 @@ const ProgressScreen = () => {
   const chartData = {
     labels: history.map((entry, i) => {
       const [date, time] = entry.date.split(' ');
-      return i % 2 === 0 ? time : ''; // optional: reduce clutter
+      return i % 2 === 0 ? time : ''; // reduce clutter
     }),
     datasets: [
       {
-        data: history.map((entry) => parseFloat(entry.total)),
+        data: history.map((entry) => parseFloat(entry.total) || 0),
       },
     ],
   };
