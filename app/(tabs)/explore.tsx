@@ -15,7 +15,7 @@ import { FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 const tabs = ['Links', 'Research', 'Organizations'];
 const screenWidth = Dimensions.get('window').width;
 
-const background = require('@/assets/images/explore-bg.jpg');
+const background = { uri: 'https://images.unsplash.com/photo-1508780709619-79562169bc64?auto=format&fit=crop&w=1050&q=80' };
 
 const Explore = () => {
   const [activeTab, setActiveTab] = useState('Links');
