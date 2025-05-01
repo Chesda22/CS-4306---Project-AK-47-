@@ -3,7 +3,7 @@
     "name": "CarbonBrain",
     "slug": "CarbonBrain",
     "version": "1.0.0",
-    "sdkVersion": "53.0.0",
+    "sdkVersion": "52.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Layla.png",
     "scheme": "myapp",
