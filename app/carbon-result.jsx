@@ -29,18 +29,18 @@ const CarbonResult = () => {
 
   let userData = null;
   try {
+    // Try parsing from string if necessary
     userData = typeof breakdown === 'string' ? JSON.parse(breakdown) : breakdown;
-    if (
-      !userData ||
-      userData.electricity === undefined ||
-      userData.gasoline === undefined ||
-      userData.meatMeals === undefined ||
-      userData.publicTransport === undefined
-    ) {
-      throw new Error("Incomplete breakdown data");
+    // Validate the presence of required fields
+    if (!userData ||
+      typeof userData.electricity !== 'number' ||
+      typeof userData.gasoline !== 'number' ||
+      typeof userData.meatMeals !== 'number' ||
+      typeof userData.publicTransport !== 'number') {
+      throw new Error("Breakdown is invalid or missing required fields");
     }
   } catch (err) {
-    console.warn("🚨 Error loading breakdown:", err.message);
+    console.warn("🚨 Error parsing breakdown:", err);
     userData = null;
   }
 
