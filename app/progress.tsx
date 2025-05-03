@@ -1,43 +1,31 @@
+// app/progress.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LineChart } from 'react-native-chart-kit';
+import { fetchCarbonHistory } from '../firebaseService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const ProgressScreen = () => {
-  const [history, setHistory] = useState<{ date: string; total: string }[]>([]);
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const jsonValue = await AsyncStorage.getItem('carbonHistory');
-        const data = jsonValue ? JSON.parse(jsonValue) : [];
+    const load = async () => {
+      const data = await fetchCarbonHistory();
 
-        const sorted = [...data].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
-        console.log('📦 Loaded history:', sorted);
+      const sorted = [...data].sort((a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
 
-        setHistory(sorted.slice(-30).reverse());
-      } catch (e) {
-        console.error('❌ Failed to load history', e);
-      }
+      setHistory(sorted.slice(-30).reverse());
     };
 
-    loadHistory();
+    load();
   }, []);
-
-  const clearHistory = async () => {
-    try {
-      await AsyncStorage.removeItem('carbonHistory');
-      setHistory([]);
-    } catch (e) {
-      console.error('Failed to clear history', e);
-    }
-  };
 
   const chartData = {
     labels: history.map((entry, i) => {
-      const [date, time] = entry.date.split(' ');
+      const time = new Date(entry.timestamp).toLocaleTimeString();
       return i % 2 === 0 ? time : '';
     }),
     datasets: [
@@ -77,24 +65,17 @@ const ProgressScreen = () => {
         <Text style={styles.noData}>No progress yet. Start calculating!</Text>
       ) : (
         history.map((entry, index) => {
-          const [date, ...timeParts] = entry.date.split(' ');
-          const time = timeParts.join(' ');
+          const date = new Date(entry.timestamp);
           return (
             <View key={index} style={styles.entry}>
               <View>
-                <Text style={styles.date}>{date}</Text>
-                <Text style={styles.time}>{time}</Text>
+                <Text style={styles.date}>{date.toLocaleDateString()}</Text>
+                <Text style={styles.time}>{date.toLocaleTimeString()}</Text>
               </View>
               <Text style={styles.value}>{entry.total} kg CO₂</Text>
             </View>
           );
         })
-      )}
-
-      {history.length > 0 && (
-        <TouchableOpacity style={styles.clearButton} onPress={clearHistory}>
-          <Text style={styles.clearButtonText}>Clear Progress</Text>
-        </TouchableOpacity>
       )}
     </ScrollView>
   );
@@ -154,17 +135,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4CAF50',
     textAlign: 'right',
-  },
-  clearButton: {
-    marginTop: 20,
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
-    borderRadius: 20,
-  },
-  clearButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
   },
 });

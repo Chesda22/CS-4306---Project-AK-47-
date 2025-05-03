@@ -1,3 +1,4 @@
+import { saveCarbonData } from '../firebaseService';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -20,7 +21,7 @@ import Animated, {
 import { generateTips } from '../utils/tips';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
-const CarbonResult = () => {
+  const CarbonResult = () => {
   const { total, breakdown } = useLocalSearchParams();
   const screenWidth = Dimensions.get('window').width;
   const scrollRef = useRef(null);
@@ -63,6 +64,15 @@ const CarbonResult = () => {
   const badgeScale = useSharedValue(0.8);
 
   const totalValue = parseFloat(total ?? '0');
+    saveCarbonData({
+        electricity,
+        gasoline: gas,
+        meatConsumption: meat,
+        publicTransport: transport,
+        recycledWaste: recycle,
+        total: total.toFixed(2)
+      });
+
   const averageAmerican = 16000;
   const worldAverage = 4000;
   const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
