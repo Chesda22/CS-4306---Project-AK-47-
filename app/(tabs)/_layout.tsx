@@ -43,7 +43,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="progress"
+        name="../progress" // ✅ this explicitly loads from app/progress.tsx
         options={{
           title: 'Progress',
           tabBarIcon: ({ color }) => (
