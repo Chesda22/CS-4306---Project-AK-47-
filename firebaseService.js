@@ -1,8 +1,8 @@
 // firebaseService.js
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { getDocs, collection } from 'firebase/firestore';
 
+// Save a result
 export const saveCarbonData = async (data) => {
   try {
     await addDoc(collection(db, 'carbonResults'), {
@@ -10,14 +10,18 @@ export const saveCarbonData = async (data) => {
       timestamp: new Date().toISOString()
     });
     console.log('Data saved!');
-  } catch (err) {
-    console.error('Error saving data:', err);
+  } catch (error) {
+    console.error('Error saving data:', error);
   }
 };
 
-
+// Fetch all results
 export const fetchCarbonHistory = async () => {
-  const querySnapshot = await getDocs(collection(db, 'carbonResults'));
-  return querySnapshot.docs.map(doc => doc.data());
+  try {
+    const snapshot = await getDocs(collection(db, 'carbonResults'));
+    return snapshot.docs.map(doc => doc.data());
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    return [];
+  }
 };
-
