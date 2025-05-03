@@ -23,7 +23,6 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 
 const CarbonResult = () => {
   const { total, breakdown } = useLocalSearchParams();
-  const screenWidth = Dimensions.get('window').width;
   const scrollRef = useRef(null);
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
@@ -69,9 +68,15 @@ const CarbonResult = () => {
 
     const saveToHistory = async () => {
       try {
-        // Save to AsyncStorage (optional)
         const oldHistory = await AsyncStorage.getItem('carbonHistory');
-        const parsed = oldHistory ? JSON.parse(oldHistory) : [];
+        let parsed = [];
+
+        try {
+          parsed = oldHistory ? JSON.parse(oldHistory) : [];
+        } catch (jsonErr) {
+          console.warn('⚠️ Corrupted local history, resetting...', jsonErr);
+          parsed = [];
+        }
 
         const now = new Date();
         const timestamp = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
@@ -81,8 +86,7 @@ const CarbonResult = () => {
         await AsyncStorage.setItem('carbonHistory', JSON.stringify(parsed));
         console.log('✅ Saved entry to local:', newEntry);
 
-        // Save to Firebase
-        saveCarbonData({
+        await saveCarbonData({
           electricity: userData.electricity,
           gasoline: userData.gasoline,
           meatConsumption: userData.meatMeals,
@@ -90,6 +94,7 @@ const CarbonResult = () => {
           recycledWaste: 0,
           total: totalValue.toFixed(2),
         });
+        console.log('✅ Data saved to Firebase!');
       } catch (e) {
         console.warn('📉 Failed to save carbon history', e);
       }
