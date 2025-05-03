@@ -9,60 +9,70 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { db } from '../../firebaseConfig';               // ← two levels up is correct
 import { LineChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function Progress() {
-  const scheme      = useColorScheme();
-  const isDark      = scheme === 'dark';
-  const [history, setHistory]   = useState<any[]>([]);
+  const scheme   = useColorScheme();
+  const isDark   = scheme === 'dark';
+
+  const [history,   setHistory]   = useState<any[]>([]);
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [{ data: [] }],
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  /* ---------- Firestore live listener ---------- */
+  const startListener = () => {
     const footprintsRef = query(
       collection(db, 'footprints'),
-      orderBy('timestamp', 'desc'),
+      orderBy('timestamp', 'desc')
     );
 
-    const unsubscribe = onSnapshot(
+    return onSnapshot(
       footprintsRef,
-      (snap) => {
-        const entries = snap.docs.map((d) => {
+      snap => {
+        const entries = snap.docs.map(d => {
           const data = d.data();
           data.timestamp =
-            data.timestamp && typeof (data.timestamp as any).toDate === 'function'
+            data.timestamp &&
+            typeof (data.timestamp as any).toDate === 'function'
               ? (data.timestamp as any).toDate()
               : new Date(data.timestamp ?? Date.now());
           return data;
         });
 
         setHistory(entries);
-
         setChartData({
-          labels: entries.map((e) =>
-            e.timestamp ? e.timestamp.toLocaleDateString() : '',
+          labels: entries.map(e =>
+            e.timestamp ? e.timestamp.toLocaleDateString() : ''
           ),
-          datasets: [{ data: entries.map((e) => e.total ?? 0) }],
+          datasets: [{ data: entries.map(e => e.total ?? 0) }],
         });
-
         setLoading(false);
       },
-      (err) => {
-        console.error('Progress tab Firestore error:', err);
+      err => {
+        console.error('[Progress tab] Firestore error →', err);
         setLoading(false);
-      },
+      }
     );
+  };
 
-    return unsubscribe;
-  }, []);
+  /* ---------- mount/unmount handling ---------- */
+  useFocusEffect(
+    React.useCallback(() => {
+      setLoading(true);
+      const unsubscribe = startListener();
+      return unsubscribe;               // clean up when tab loses focus
+    }, [])
+  );
 
+  /* ---------- styles ---------- */
   const styles = StyleSheet.create({
     screen: {
       flexGrow: 1,
@@ -95,6 +105,7 @@ export default function Progress() {
     },
   });
 
+  /* ---------- render ---------- */
   return (
     <ScrollView contentContainerStyle={styles.screen}>
       <Text style={styles.title}>Carbon Footprint Over Time</Text>
@@ -104,7 +115,7 @@ export default function Progress() {
       {!loading && history.length === 0 && (
         <Text style={styles.empty}>
           You haven’t saved any footprints yet. Calculate one to see your
-          progress chart 📈
+          progress 📈
         </Text>
       )}
 
@@ -130,10 +141,7 @@ export default function Progress() {
           <Text style={[styles.title, { marginTop: 24 }]}>History</Text>
 
           {history.map((entry, i) => (
-            <View
-              key={entry.timestamp?.getTime?.() ?? i}
-              style={styles.card}
-            >
+            <View key={entry.timestamp?.getTime?.() ?? i} style={styles.card}>
               <Text style={styles.cardText}>
                 Date: {entry.timestamp?.toLocaleString()}
               </Text>
@@ -141,9 +149,9 @@ export default function Progress() {
                 Total: {entry.total ?? 0} kg CO₂
               </Text>
               <Text style={styles.small}>
-                Electricity: {entry.electricity} | Gasoline: {entry.gasoline} |
-                Meat: {entry.meatConsumption} | Transport: {entry.publicTransport} | Recycled:{' '}
-                {entry.recycledWaste}
+                Electricity: {entry.electricity} | Gasoline: {entry.gasoline} | Meat:{' '}
+                {entry.meatConsumption} | Transport: {entry.publicTransport} |
+                Recycled: {entry.recycledWaste}
               </Text>
             </View>
           ))}
