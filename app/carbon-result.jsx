@@ -1,15 +1,19 @@
-import { saveCarbonData } from '../firebaseService';
-import React, { useEffect, useRef } from 'react';
+// app/(tabs)/CarbonResult.tsx
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   useColorScheme,
-  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { saveCarbonData } from '../firebaseService';
+import { generateTips } from '../utils/tips';
+import ConfettiCannon from 'react-native-confetti-cannon';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,29 +21,32 @@ import Animated, {
   withRepeat,
   withSequence,
 } from 'react-native-reanimated';
-import { generateTips } from '../utils/tips';
-import ConfettiCannon from 'react-native-confetti-cannon';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';            // ← two levels up
+import { LineChart } from 'react-native-chart-kit';
+import { useFocusEffect } from '@react-navigation/native';
 
-const CarbonResult = () => {
-  const { total, breakdown } = useLocalSearchParams();
-  const scrollRef = useRef(null);
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
-  let userData = null;
+export default function CarbonResult() {
+  /* ---------- params & theme ---------- */
+  const { total, breakdown } = useLocalSearchParams<{ total: string; breakdown: string }>();
+  const scheme   = useColorScheme();
+  const isDark   = scheme === 'dark';
+
+  /* ---------- parse breakdown ---------- */
+  let userData: any = null;
   try {
     userData = typeof breakdown === 'string' ? JSON.parse(breakdown) : breakdown;
     if (
       !userData ||
       typeof userData.electricity !== 'number' ||
-      typeof userData.gasoline !== 'number' ||
-      typeof userData.meatMeals !== 'number' ||
+      typeof userData.gasoline    !== 'number' ||
+      typeof userData.meatMeals   !== 'number' ||
       typeof userData.publicTransport !== 'number'
-    ) {
-      throw new Error('Breakdown is invalid or missing required fields');
-    }
-  } catch (err) {
-    console.warn('🚨 Error parsing breakdown:', err);
+    ) throw new Error('missing fields');
+  } catch (e) {
+    console.warn('Error parsing breakdown →', e);
     userData = null;
   }
 
@@ -47,12 +54,9 @@ const CarbonResult = () => {
     return (
       <View style={[styles.container, { backgroundColor: '#001F3F', justifyContent: 'center' }]}>
         <Text style={{ color: '#FFD700', fontSize: 18, textAlign: 'center' }}>
-          ⚠️ Unable to load your results. Please calculate your footprint again.
+          ⚠️ Unable to load your results. Please calculate again.
         </Text>
-        <TouchableOpacity
-          style={[styles.calculateButton, { marginTop: 20 }]}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={[styles.calculateButton, { marginTop: 20 }]} onPress={() => router.back()}>
           <Text style={styles.buttonText}>🔄 Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -60,36 +64,32 @@ const CarbonResult = () => {
   }
 
   const totalValue = parseFloat(total ?? '0');
-  const tips = generateTips(userData);
+  const tips       = generateTips(userData);
 
-  const successOpacity = useSharedValue(0);
-  const badgeScale = useSharedValue(0.8);
-
+  /* ---------- store to Firestore once ---------- */
   useEffect(() => {
-    scrollRef?.current?.scrollTo({ y: 0, animated: true });
-
-    const saveToFirebase = async () => {
+    (async () => {
       try {
-        const now = new Date();
-        const payload = {
-          electricity: userData.electricity,
-          gasoline: userData.gasoline,
-          meatConsumption: userData.meatMeals,
-          publicTransport: userData.publicTransport,
-          recycledWaste: 0,
-          total: totalValue.toFixed(2),
-          timestamp: now.getTime(), // Save as number
-        };
-
-        await saveCarbonData(payload);
-        console.log('✅ Data saved to Firebase:', payload);
+        await saveCarbonData({
+          electricity:      userData.electricity,
+          gasoline:         userData.gasoline,
+          meatConsumption:  userData.meatMeals,
+          publicTransport:  userData.publicTransport,
+          recycledWaste:    0,
+          total:            totalValue.toFixed(2),
+          timestamp:        Date.now(),                // epoch ms
+        });
+        console.log('Saved footprint to Firestore');
       } catch (e) {
-        console.warn('📉 Failed to save to Firebase', e);
+        console.warn('Failed saving footprint →', e);
       }
-    };
+    })();
+  }, []);
 
-    saveToFirebase();
-
+  /* ---------- confetti & header animation ---------- */
+  const successOpacity = useSharedValue(0);
+  const badgeScale     = useSharedValue(0.8);
+  useEffect(() => {
     successOpacity.value = withTiming(1, { duration: 1000 });
     badgeScale.value = withRepeat(
       withSequence(withTiming(1, { duration: 400 }), withTiming(0.95, { duration: 400 })),
@@ -98,104 +98,181 @@ const CarbonResult = () => {
     );
   }, []);
 
-  const successStyle = useAnimatedStyle(() => ({
-    opacity: successOpacity.value,
-  }));
+  const successStyle       = useAnimatedStyle(() => ({ opacity: successOpacity.value }));
+  const badgeAnimatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: badgeScale.value }] }));
 
-  const badgeAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: badgeScale.value }],
-  }));
+  /* ---------- live progress listener ---------- */
+  const [history, setHistory]   = useState<any[]>([]);
+  const [chartData, setChartData] = useState({ labels: [], datasets: [{ data: [] }] });
+  const [loading, setLoading]   = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
 
-  const averageAmerican = 16000;
-  const worldAverage = 4000;
-  const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
-  const percentBetterThanWorld = 100 - (totalValue / worldAverage) * 100;
-  const treesToOffset = Math.ceil(totalValue / 22);
+  // Attach / detach on tab focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const q = query(collection(db, 'footprints'), orderBy('timestamp', 'desc'));
+      const unsub = onSnapshot(
+        q,
+        snap => {
+          const rows = snap.docs.map(d => {
+            const data = d.data();
+            data.timestamp =
+              data.timestamp && typeof (data.timestamp as any).toDate === 'function'
+                ? (data.timestamp as any).toDate()
+                : new Date(data.timestamp ?? Date.now());
+            return data;
+          });
+          setHistory(rows);
+          setChartData({
+            labels: rows.map(r => (r.timestamp ? r.timestamp.toLocaleDateString() : '')),
+            datasets: [{ data: rows.map(r => r.total ?? 0) }],
+          });
+          setLoading(false);
+        },
+        err => {
+          console.error('[CarbonResult] listener error', err);
+          setLoading(false);
+        }
+      );
+      return unsub;
+    }, [])
+  );
 
-  let badge = '';
-  if (totalValue < 3000) badge = '🥇 Ultra Green Hero!';
-  else if (totalValue < 5000) badge = '🏅 Green Champion!';
-  else if (totalValue < 8000) badge = '🌱 Eco-Warrior!';
-  else if (totalValue < 12000) badge = '⚠️ Climate Aware – Room to Improve';
-  else if (totalValue < 16000) badge = '🚨 Above Average – Take Action!';
-  else badge = '🔥 High Impact – Urgent Change Needed!';
+  /* ---------- eco badge logic ---------- */
+  const averageUS      = 16000;
+  const worldAverage   = 4000;
+  const percentAboveUS = ((totalValue - averageUS) / averageUS) * 100;
+  const percentBetterWorld = 100 - (totalValue / worldAverage) * 100;
+  const treesToOffset  = Math.ceil(totalValue / 22);
 
+  let badge = '🔥 High Impact – Urgent Change Needed!';
+  if (totalValue < 3000)      badge = '🥇 Ultra Green Hero!';
+  else if (totalValue < 5000) badge = '🏅 Green Champion!';
+  else if (totalValue < 8000) badge = '🌱 Eco‑Warrior!';
+  else if (totalValue < 12000)badge = '⚠️ Climate Aware – Room to Improve';
+  else if (totalValue < 16000)badge = '🚨 Above Average – Take Action!';
+
+  /* ---------- animated panel height ---------- */
+  const panelH = useSharedValue(0);
+  const panelStyle = useAnimatedStyle(() => ({ height: panelH.value }));
+  useEffect(() => { panelH.value = withTiming(panelOpen ? 420 : 0); }, [panelOpen]);
+
+  /* ---------- render ---------- */
   return (
-    <ScrollView
-      ref={scrollRef}
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: isDark ? '#000' : '#001F3F' },
-      ]}
-    >
+    <ScrollView contentContainerStyle={[
+      styles.container,
+      { backgroundColor: isDark ? '#000' : '#001F3F' },
+    ]}>
+
+      {/* 🎉 header */}
       <Animated.View style={[styles.successMessage, successStyle]}>
-        <Text style={styles.successText}>🎉 Congratulations! You calculated your footprint!</Text>
+        <Text style={styles.successText}>🎉 Footprint calculated successfully!</Text>
       </Animated.View>
+      <ConfettiCannon count={100} origin={{ x: SCREEN_WIDTH / 2, y: 0 }} fadeOut autoStart />
 
-      <ConfettiCannon
-        count={100}
-        origin={{ x: 200, y: 0 }}
-        fadeOut
-        autoStart
-        explosionSpeed={300}
-        fallSpeed={3000}
-      />
-
+      {/* 🌍 total */}
       <Text style={styles.sectionHeader}>🌍 Your Carbon Footprint Report</Text>
-
       <View style={styles.totalCard}>
         <Text style={styles.totalLabel}>Total Footprint</Text>
-        <Text style={styles.totalValue}>{totalValue} kg CO₂</Text>
+        <Text style={styles.totalValue}>{totalValue} kg CO₂</Text>
       </View>
 
+      {/* 📊 breakdown + tips */}
       <Text style={styles.chartHeader}>📊 Emission Breakdown</Text>
-      <Animated.View style={[styles.totalCard, { alignItems: 'flex-start', padding: 24 }]}>
-        <Text style={styles.totalLabel}>• Electricity: {userData.electricity} kWh</Text>
-        <Text style={styles.totalLabel}>• Gasoline: {userData.gasoline} gallons</Text>
+      <View style={[styles.totalCard, { alignItems: 'flex-start', padding: 24 }]}>
+        <Text style={styles.totalLabel}>• Electricity: {userData.electricity} kWh</Text>
+        <Text style={styles.totalLabel}>• Gasoline: {userData.gasoline} gal</Text>
         <Text style={styles.totalLabel}>• Meat Meals: {userData.meatMeals}</Text>
-        <Text style={styles.totalLabel}>• Public Transport: {userData.publicTransport} miles</Text>
+        <Text style={styles.totalLabel}>• Public Transport: {userData.publicTransport} mi</Text>
 
-        <Text style={[styles.totalLabel, { marginTop: 16 }]}>💡 Personalized Tips Just for You:</Text>
-        {tips.map((tip, index) => (
-          <View key={index} style={styles.tipBox}>
+        <Text style={[styles.totalLabel, { marginTop: 16 }]}>💡 Personalized Tips:</Text>
+        {tips.map((tip: string, i: number) => (
+          <View key={i} style={styles.tipBox}>
             <Text style={styles.tipEmoji}>🌱</Text>
             <Text style={styles.tipEngagingText}>{tip}</Text>
           </View>
         ))}
-      </Animated.View>
+      </View>
 
+      {/* 🏆 eco‑badge */}
       <Animated.View style={[styles.badgeCard, badgeAnimatedStyle]}>
         <Text style={styles.badgeText}>{badge}</Text>
         <View style={styles.statRow}>
-          <Text style={styles.statLabel}>🇺🇸 Compared to U.S. Average:</Text>
+          <Text style={styles.statLabel}>🇺🇸 vs. U.S. average:</Text>
           <Text style={styles.statValue}>
-            {percentAboveUS > 0 ? `${percentAboveUS.toFixed(1)}% Higher` : `Below Average ✅`}
+            {percentAboveUS > 0 ? `${percentAboveUS.toFixed(1)} % higher` : 'Below average ✅'}
           </Text>
         </View>
         <View style={styles.statRow}>
-          <Text style={styles.statLabel}>🌍 Better than World:</Text>
-          <Text style={styles.statValue}>{Math.max(0, percentBetterThanWorld.toFixed(1))}%</Text>
+          <Text style={styles.statLabel}>🌍 Better than world:</Text>
+          <Text style={styles.statValue}>{Math.max(0, percentBetterWorld).toFixed(1)} %</Text>
         </View>
         <View style={styles.statRow}>
-          <Text style={styles.statLabel}>🌳 Trees Needed to offset:</Text>
-          <Text style={styles.statValue}>{treesToOffset} / year</Text>
+          <Text style={styles.statLabel}>🌳 Trees to offset / yr:</Text>
+          <Text style={styles.statValue}>{treesToOffset}</Text>
         </View>
       </Animated.View>
 
-      <TouchableOpacity style={styles.calculateButton} onPress={() => router.back()}>
+      {/* 📈 progress toggle */}
+      <TouchableOpacity style={styles.calculateButton} onPress={() => setPanelOpen(p => !p)}>
+        <Text style={styles.buttonText}>
+          {panelOpen ? 'Hide my progress' : 'Show my progress'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* animated chart & history list */}
+      <Animated.View style={[{ overflow: 'hidden' }, panelStyle]}>
+        {loading && <ActivityIndicator style={{ marginTop: 12 }} />}
+        {!loading && history.length === 0 && (
+          <Text style={{ color: isDark ? '#bbb' : '#888', textAlign: 'center', marginTop: 16 }}>
+            No previous footprints yet. Calculate again to start tracking!
+          </Text>
+        )}
+        {!loading && history.length > 0 && (
+          <>
+            <LineChart
+              data={chartData}
+              width={SCREEN_WIDTH - 32}
+              height={200}
+              yAxisSuffix=" kg"
+              bezier
+              chartConfig={{
+                backgroundGradientFrom: isDark ? '#000' : '#fff',
+                backgroundGradientTo:   isDark ? '#000' : '#fff',
+                decimalPlaces: 0,
+                color:        (o = 1) => `rgba(0, 200, 83, ${o})`,
+                labelColor:   () => (isDark ? '#fff' : '#000'),
+                propsForDots: { r: '4' },
+              }}
+              style={{ marginVertical: 8, borderRadius: 8 }}
+            />
+            {history.map((h, i) => (
+              <View key={h.timestamp?.getTime?.() ?? i} style={styles.historyCard}>
+                <Text style={styles.historyText}>
+                  {h.timestamp?.toLocaleString()} – {h.total ?? 0} kg CO₂
+                </Text>
+                <Text style={styles.small}>
+                  Elec {h.electricity}, Gas {h.gasoline}, Meat {h.meatConsumption}, PT {h.publicTransport}, Rec {h.recycledWaste}
+                </Text>
+              </View>
+            ))}
+          </>
+        )}
+      </Animated.View>
+
+      {/* 🔄 recalc */}
+      <TouchableOpacity style={[styles.calculateButton, { marginTop: 20 }]} onPress={() => router.back()}>
         <Text style={styles.buttonText}>🔄 Calculate Again</Text>
       </TouchableOpacity>
     </ScrollView>
   );
-};
+}
 
-export default CarbonResult;
-
+/* ---------- styles ---------- */
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    justifyContent: 'center',
   },
   successMessage: {
     marginBottom: 20,
@@ -227,7 +304,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#001F3F',
     fontWeight: 'bold',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   totalValue: {
     fontSize: 28,
@@ -241,7 +318,6 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     textAlign: 'center',
     marginBottom: 10,
-    marginTop: -10,
   },
   badgeCard: {
     backgroundColor: '#004080',
@@ -282,16 +358,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  tipEmoji: {
-    fontSize: 20,
-    marginRight: 10,
-  },
+  tipEmoji: { fontSize: 20, marginRight: 8 },
   tipEngagingText: {
     fontSize: 15,
     color: '#FFFFFF',
@@ -305,9 +373,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+
+  /* progress panel */
+  historyCard: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#00224d',
+    marginBottom: 8,
   },
+  historyText: { color: '#fff', fontWeight: '500' },
+  small: { fontSize: 12, color: '#ccc' },
 });
