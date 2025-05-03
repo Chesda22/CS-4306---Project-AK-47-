@@ -10,7 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -50,7 +49,10 @@ const CarbonResult = () => {
         <Text style={{ color: '#FFD700', fontSize: 18, textAlign: 'center' }}>
           ⚠️ Unable to load your results. Please calculate your footprint again.
         </Text>
-        <TouchableOpacity style={[styles.calculateButton, { marginTop: 20 }]} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={[styles.calculateButton, { marginTop: 20 }]}
+          onPress={() => router.back()}
+        >
           <Text style={styles.buttonText}>🔄 Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -66,41 +68,27 @@ const CarbonResult = () => {
   useEffect(() => {
     scrollRef?.current?.scrollTo({ y: 0, animated: true });
 
-    const saveToHistory = async () => {
+    const saveToFirebase = async () => {
       try {
-        const oldHistory = await AsyncStorage.getItem('carbonHistory');
-        let parsed = [];
-
-        try {
-          parsed = oldHistory ? JSON.parse(oldHistory) : [];
-        } catch (jsonErr) {
-          console.warn('⚠️ Corrupted local history, resetting...', jsonErr);
-          parsed = [];
-        }
-
         const now = new Date();
-        const timestamp = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-        const newEntry = { date: timestamp, total: totalValue.toFixed(2) };
-
-        parsed.push(newEntry);
-        await AsyncStorage.setItem('carbonHistory', JSON.stringify(parsed));
-        console.log('✅ Saved entry to local:', newEntry);
-
-        await saveCarbonData({
+        const payload = {
           electricity: userData.electricity,
           gasoline: userData.gasoline,
           meatConsumption: userData.meatMeals,
           publicTransport: userData.publicTransport,
           recycledWaste: 0,
           total: totalValue.toFixed(2),
-        });
-        console.log('✅ Data saved to Firebase!');
+          timestamp: now.toISOString(), // ✅ standardized format
+        };
+
+        await saveCarbonData(payload);
+        console.log('✅ Data saved to Firebase:', payload);
       } catch (e) {
-        console.warn('📉 Failed to save carbon history', e);
+        console.warn('📉 Failed to save to Firebase', e);
       }
     };
 
-    saveToHistory();
+    saveToFirebase();
 
     successOpacity.value = withTiming(1, { duration: 1000 });
     badgeScale.value = withRepeat(
