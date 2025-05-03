@@ -1,6 +1,6 @@
 // app/progress.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { fetchCarbonHistory } from '../firebaseService';
 
@@ -9,35 +9,34 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const ProgressScreen = () => {
   const [history, setHistory] = useState([]);
 
-useEffect(() => {
-  const load = async () => {
-    try {
-      const data = await fetchCarbonHistory();
-      console.log('🔥 Raw fetched data from Firebase:', data); // <-- ✅ Log raw data
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await fetchCarbonHistory();
+        console.log('🔥 Raw fetched data from Firebase:', data);
 
-      const cleaned = data.filter(entry => {
-        const valid = entry.timestamp && !isNaN(new Date(entry.timestamp).getTime()) && !isNaN(parseFloat(entry.total));
-        if (!valid) {
-          console.warn('⚠️ Skipping invalid entry:', entry); // <-- ✅ Log invalid entries
-        }
-        return valid;
-      });
+        const cleaned = data.filter(entry => {
+          const valid = entry.timestamp && !isNaN(new Date(entry.timestamp).getTime()) && !isNaN(parseFloat(entry.total));
+          if (!valid) {
+            console.warn('⚠️ Skipping invalid entry:', entry);
+          }
+          return valid;
+        });
 
-      console.log('✅ Cleaned history to be shown:', cleaned); // <-- ✅ Log cleaned data
+        console.log('✅ Cleaned history to be shown:', cleaned);
 
-      const sorted = [...cleaned].sort((a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
+        const sorted = [...cleaned].sort((a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
 
-      setHistory(sorted.slice(-30).reverse());
-    } catch (error) {
-      console.error('❌ Failed to load history from Firebase:', error);
-    }
-  };
+        setHistory(sorted.slice(-30).reverse());
+      } catch (error) {
+        console.error('❌ Failed to load history from Firebase:', error);
+      }
+    };
 
-  load();
-}, []);
-
+    load();
+  }, []);
 
   const chartData = {
     labels: history.map((entry, i) => {
@@ -80,18 +79,25 @@ useEffect(() => {
       {history.length === 0 ? (
         <Text style={styles.noData}>No progress yet. Start calculating!</Text>
       ) : (
-        history.map((entry, index) => {
-          const date = new Date(entry.timestamp);
-          return (
-            <View key={index} style={styles.entry}>
-              <View>
-                <Text style={styles.date}>{date.toLocaleDateString()}</Text>
-                <Text style={styles.time}>{date.toLocaleTimeString()}</Text>
+        <>
+          {history.map((entry, index) => {
+            const date = new Date(entry.timestamp);
+            return (
+              <View key={index} style={styles.entry}>
+                <View>
+                  <Text style={styles.date}>{date.toLocaleDateString()}</Text>
+                  <Text style={styles.time}>{date.toLocaleTimeString()}</Text>
+                </View>
+                <Text style={styles.value}>{entry.total} kg CO₂</Text>
               </View>
-              <Text style={styles.value}>{entry.total} kg CO₂</Text>
-            </View>
-          );
-        })
+            );
+          })}
+
+          {/* ✅ TEMP DEBUG: Display raw data */}
+          <Text style={{ fontSize: 12, marginTop: 10, color: '#444' }}>
+            Raw: {JSON.stringify(history, null, 2)}
+          </Text>
+        </>
       )}
     </ScrollView>
   );
