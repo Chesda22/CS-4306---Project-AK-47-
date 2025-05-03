@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { fetchCarbonHistory } from '../firebaseService';
+import { fetchCarbonHistory } from '../../firebaseService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
