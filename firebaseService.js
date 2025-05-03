@@ -1,6 +1,7 @@
 // firebaseService.js
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import { getDocs, collection } from 'firebase/firestore';
 
 export const saveCarbonData = async (data) => {
   try {
@@ -13,3 +14,10 @@ export const saveCarbonData = async (data) => {
     console.error('Error saving data:', err);
   }
 };
+
+
+export const fetchCarbonHistory = async () => {
+  const querySnapshot = await getDocs(collection(db, 'carbonResults'));
+  return querySnapshot.docs.map(doc => doc.data());
+};
+
