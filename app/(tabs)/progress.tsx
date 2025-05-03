@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ScrollView, View, Text } from 'react-native';
 // 🔴 Add Firebase Firestore imports:
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebaseConfig';  // adjust the import to your firebase config
+import { db } from '../../firebaseConfig';
 
 // ... your other imports (chart library, styles, etc.)
 
