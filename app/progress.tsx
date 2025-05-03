@@ -9,27 +9,35 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const ProgressScreen = () => {
   const [history, setHistory] = useState([]);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchCarbonHistory();
+useEffect(() => {
+  const load = async () => {
+    try {
+      const data = await fetchCarbonHistory();
+      console.log('🔥 Raw fetched data from Firebase:', data); // <-- ✅ Log raw data
 
-        const cleaned = data.filter(entry => {
-          return entry.timestamp && !isNaN(new Date(entry.timestamp).getTime()) && !isNaN(parseFloat(entry.total));
-        });
+      const cleaned = data.filter(entry => {
+        const valid = entry.timestamp && !isNaN(new Date(entry.timestamp).getTime()) && !isNaN(parseFloat(entry.total));
+        if (!valid) {
+          console.warn('⚠️ Skipping invalid entry:', entry); // <-- ✅ Log invalid entries
+        }
+        return valid;
+      });
 
-        const sorted = [...cleaned].sort((a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
+      console.log('✅ Cleaned history to be shown:', cleaned); // <-- ✅ Log cleaned data
 
-        setHistory(sorted.slice(-30).reverse());
-      } catch (error) {
-        console.error('Failed to load history from Firebase:', error);
-      }
-    };
+      const sorted = [...cleaned].sort((a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
 
-    load();
-  }, []);
+      setHistory(sorted.slice(-30).reverse());
+    } catch (error) {
+      console.error('❌ Failed to load history from Firebase:', error);
+    }
+  };
+
+  load();
+}, []);
+
 
   const chartData = {
     labels: history.map((entry, i) => {
