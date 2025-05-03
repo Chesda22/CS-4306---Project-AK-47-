@@ -11,16 +11,16 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';               // ← two levels up is correct
+import { db } from '../../firebaseConfig';
 import { LineChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function Progress() {
-  const scheme   = useColorScheme();
-  const isDark   = scheme === 'dark';
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
 
-  const [history,   setHistory]   = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [{ data: [] }],
@@ -40,20 +40,24 @@ export default function Progress() {
         const entries = snap.docs.map(d => {
           const data = d.data();
           data.timestamp =
-            data.timestamp &&
-            typeof (data.timestamp as any).toDate === 'function'
+            data.timestamp && typeof (data.timestamp as any).toDate === 'function'
               ? (data.timestamp as any).toDate()
               : new Date(data.timestamp ?? Date.now());
           return data;
         });
 
-        setHistory(entries);
+        setHistory(entries);            // keep original (latest‑first) for list
+
+        /* 👉 Build sequential x‑axis labels (oldest → newest) */
+        const chronological = [...entries].reverse();      // oldest first
+        const labels = chronological.map((_, i) => String(i + 1));
+        const totals = chronological.map(e => e.total ?? 0);
+
         setChartData({
-          labels: entries.map(e =>
-            e.timestamp ? e.timestamp.toLocaleDateString() : ''
-          ),
-          datasets: [{ data: entries.map(e => e.total ?? 0) }],
+          labels,
+          datasets: [{ data: totals }],
         });
+
         setLoading(false);
       },
       err => {
@@ -68,7 +72,7 @@ export default function Progress() {
     React.useCallback(() => {
       setLoading(true);
       const unsubscribe = startListener();
-      return unsubscribe;               // clean up when tab loses focus
+      return unsubscribe;
     }, [])
   );
 
