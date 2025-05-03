@@ -11,13 +11,21 @@ const ProgressScreen = () => {
 
   useEffect(() => {
     const load = async () => {
-      const data = await fetchCarbonHistory();
+      try {
+        const data = await fetchCarbonHistory();
 
-      const sorted = [...data].sort((a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
+        const cleaned = data.filter(entry => {
+          return entry.timestamp && !isNaN(new Date(entry.timestamp).getTime()) && !isNaN(parseFloat(entry.total));
+        });
 
-      setHistory(sorted.slice(-30).reverse());
+        const sorted = [...cleaned].sort((a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+
+        setHistory(sorted.slice(-30).reverse());
+      } catch (error) {
+        console.error('Failed to load history from Firebase:', error);
+      }
     };
 
     load();
