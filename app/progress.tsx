@@ -54,32 +54,28 @@ const ProgressScreen = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Your Carbon Footprint Progress</Text>
 
-      {history.length > 0 && (
-        <LineChart
-          data={chartData}
-          width={SCREEN_WIDTH * 0.9}
-          height={220}
-          chartConfig={{
-            backgroundGradientFrom: '#91EAE4',
-            backgroundGradientTo: '#7F7FD5',
-            decimalPlaces: 2,
-            color: (opacity = 1) => `rgba(0, 51, 102, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            propsForDots: {
-              r: '4',
-              strokeWidth: '2',
-              stroke: '#007ACC',
-            },
-          }}
-          bezier
-          style={styles.chart}
-        />
-      )}
-
-      {history.length === 0 ? (
-        <Text style={styles.noData}>No progress yet. Start calculating!</Text>
-      ) : (
+      {history.length > 0 ? (
         <>
+          <LineChart
+            data={chartData}
+            width={SCREEN_WIDTH * 0.9}
+            height={220}
+            chartConfig={{
+              backgroundGradientFrom: '#91EAE4',
+              backgroundGradientTo: '#7F7FD5',
+              decimalPlaces: 2,
+              color: (opacity = 1) => `rgba(0, 51, 102, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              propsForDots: {
+                r: '4',
+                strokeWidth: '2',
+                stroke: '#007ACC',
+              },
+            }}
+            bezier
+            style={styles.chart}
+          />
+
           {history.map((entry, index) => {
             const date = new Date(entry.timestamp);
             return (
@@ -92,12 +88,9 @@ const ProgressScreen = () => {
               </View>
             );
           })}
-
-          {/* ✅ TEMP DEBUG: Display raw data */}
-          <Text style={{ fontSize: 12, marginTop: 10, color: '#444' }}>
-            Raw: {JSON.stringify(history, null, 2)}
-          </Text>
         </>
+      ) : (
+        <Text style={styles.noData}>No progress yet. Start calculating!</Text>
       )}
     </ScrollView>
   );
