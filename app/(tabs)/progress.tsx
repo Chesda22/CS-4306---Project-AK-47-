@@ -1,4 +1,4 @@
-// app/progress.tsx
+// app/(tabs)/progress.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
@@ -13,25 +13,26 @@ const ProgressScreen = () => {
     const load = async () => {
       try {
         const data = await fetchCarbonHistory();
-        console.log('🔥 Raw fetched data from Firebase:', data);
+        console.log('🔥 Raw fetched data:', data);
 
         const cleaned = data.filter(entry => {
-          const valid = entry.timestamp && !isNaN(new Date(entry.timestamp).getTime()) && !isNaN(parseFloat(entry.total));
+          const valid =
+            typeof entry.timestamp === 'string' &&
+            !isNaN(new Date(entry.timestamp).getTime()) &&
+            !isNaN(parseFloat(entry.total));
           if (!valid) {
             console.warn('⚠️ Skipping invalid entry:', entry);
           }
           return valid;
         });
 
-        console.log('✅ Cleaned history to be shown:', cleaned);
-
         const sorted = [...cleaned].sort((a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
 
         setHistory(sorted.slice(-30).reverse());
-      } catch (error) {
-        console.error('❌ Failed to load history from Firebase:', error);
+      } catch (err) {
+        console.error('❌ Failed to load history:', err);
       }
     };
 
@@ -40,12 +41,12 @@ const ProgressScreen = () => {
 
   const chartData = {
     labels: history.map((entry, i) => {
-      const time = new Date(entry.timestamp).toLocaleTimeString();
-      return i % 2 === 0 ? time : '';
+      const date = new Date(entry.timestamp);
+      return i % 2 === 0 ? date.toLocaleTimeString() : '';
     }),
     datasets: [
       {
-        data: history.map((entry) => parseFloat(entry.total) || 0),
+        data: history.map(entry => parseFloat(entry.total)),
       },
     ],
   };
