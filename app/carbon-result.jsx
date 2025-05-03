@@ -1,4 +1,4 @@
-// app/carbon-result.jsx
+// app/carbon-result.jsx  ← replace the entire file with this
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -20,10 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
-import {
-  initializeApp,
-  getApps,
-} from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import {
   getFirestore,
   collection,
@@ -36,24 +33,22 @@ import {
 
 import { LineChart } from 'react-native-chart-kit';
 import { generateTips } from '../utils/tips';
+import firebaseConfig from '../firebaseConfig';         // project root ➜ app ➜ this file
 
-// ---------- Firebase bootstrap ----------
-import firebaseConfig from '../firebaseConfig';   // project root ➜ app ➜ this file (one level up)
-
+/* ---------- Firebase ---------- */
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// ---------- Layout constants ----------
+/* ---------- Layout consts ---------- */
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// ---------- Component ----------
+/* ---------- Component ---------- */
 export default function CarbonResult() {
-  /* theme + URL params */
   const { total, breakdown } = useLocalSearchParams();
   const scheme  = useColorScheme();
   const isDark  = scheme === 'dark';
 
-  /* ---------- parse & validate breakdown ---------- */
+  /* parse params */
   let userData = null;
   try {
     userData = typeof breakdown === 'string' ? JSON.parse(breakdown) : breakdown;
@@ -63,8 +58,8 @@ export default function CarbonResult() {
         k => typeof userData[k] !== 'number'
       )
     ) throw new Error('invalid breakdown');
-  } catch (e) {
-    console.warn('❌ Error parsing breakdown', e);
+  } catch {
+    userData = null;
   }
 
   if (!userData) {
@@ -83,41 +78,34 @@ export default function CarbonResult() {
   const totalValue = Number(total) || 0;
   const tips       = generateTips(userData);
 
-  /* ---------- save to Firestore ONCE ---------- */
+  /* ---------- write once ---------- */
   useEffect(() => {
-    (async () => {
-      try {
-        await addDoc(collection(db, 'footprints'), {
-          electricity:     userData.electricity,
-          gasoline:        userData.gasoline,
-          meatConsumption: userData.meatMeals,
-          publicTransport: userData.publicTransport,
-          recycledWaste:   0,
-          total:           totalValue,
-          timestamp:       serverTimestamp(),
-        });
-        console.log('✅ Data saved to Firestore!');
-      } catch (e) {
-        console.warn('📉 Failed to save to Firestore', e);
-      }
-    })();
+    addDoc(collection(db, 'footprints'), {
+      electricity:     userData.electricity,
+      gasoline:        userData.gasoline,
+      meatConsumption: userData.meatMeals,
+      publicTransport: userData.publicTransport,
+      recycledWaste:   0,
+      total:           totalValue,
+      timestamp:       serverTimestamp(),
+    }).catch(e => console.warn('Firestore write failed', e));
   }, []);
 
-  /* ---------- confetti + badge animation ---------- */
-  const fadeIn = useSharedValue(0);
-  const pulse  = useSharedValue(0.85);
+  /* ---------- simple animations ---------- */
+  const fade  = useSharedValue(0);
+  const pulse = useSharedValue(0.85);
   useEffect(() => {
-    fadeIn.value = withTiming(1, { duration: 800 });
-    pulse.value  = withRepeat(
-      withSequence(withTiming(1,  { duration: 400 }), withTiming(0.9, { duration: 400 })),
+    fade.value  = withTiming(1, { duration: 800 });
+    pulse.value = withRepeat(
+      withSequence(withTiming(1, { duration: 400 }), withTiming(0.9, { duration: 400 })),
       -1,
       true
     );
   }, []);
-  const fadeStyle  = useAnimatedStyle(() => ({ opacity: fadeIn.value }));
+  const fadeStyle  = useAnimatedStyle(() => ({ opacity: fade.value }));
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
-  /* ---------- live progress listener ---------- */
+  /* ---------- progress listener ---------- */
   const [loading,   setLoading]   = useState(true);
   const [history,   setHistory]   = useState([]);
   const [chartData, setChartData] = useState({ labels: [], datasets: [{ data: [] }] });
@@ -131,22 +119,24 @@ export default function CarbonResult() {
         data.timestamp = data.timestamp?.toDate ? data.timestamp.toDate() : new Date();
         return data;
       });
-      setHistory(rows);
-      setChartData({
-        labels: rows.map(r => r.timestamp.toLocaleDateString()),
-        datasets: [{ data: rows.map(r => Number(r.total) || 0) }],
-      });
+
+      /* 👉 build x‑axis labels as 1, 2, 3 … (oldest → newest) */
+      const chronological = [...rows].reverse();              // oldest first
+      const labels  = chronological.map((_, i) => String(i + 1));
+      const totals  = chronological.map(r => Number(r.total) || 0);
+
+      setHistory(rows);                                       // keep original order for list
+      setChartData({ labels, datasets: [{ data: totals }] });
       setLoading(false);
     });
     return unsub;
   }, []);
 
-  /* ---------- eco-badge calculations ---------- */
-  const avgUS      = 16000;
-  const worldAvg   = 4000;
-  const pctUS      = ((totalValue - avgUS) / avgUS) * 100;
-  const pctWorld   = 100 - (totalValue / worldAvg) * 100;
-  const trees      = Math.ceil(totalValue / 22);
+  /* ---------- eco badge logic ---------- */
+  const avgUS = 16000, worldAvg = 4000;
+  const pctUS = ((totalValue - avgUS) / avgUS) * 100;
+  const pctWorld = 100 - (totalValue / worldAvg) * 100;
+  const trees = Math.ceil(totalValue / 22);
 
   let badge = '🔥 High Impact – Urgent Change Needed!';
   if (totalValue < 3000)      badge = '🥇 Ultra Green Hero!';
@@ -155,7 +145,6 @@ export default function CarbonResult() {
   else if (totalValue < 12000)badge = '⚠️ Climate Aware – Room to Improve';
   else if (totalValue < 16000)badge = '🚨 Above Average – Take Action!';
 
-  /* ---------- panel animation height ---------- */
   const panelH     = useSharedValue(0);
   const panelStyle = useAnimatedStyle(() => ({ height: panelH.value }));
   useEffect(() => { panelH.value = withTiming(panelOpen ? 420 : 0); }, [panelOpen]);
@@ -171,22 +160,14 @@ export default function CarbonResult() {
       <Animated.View style={[styles.toast, fadeStyle]}>
         <Text style={styles.toastText}>🎉 Footprint calculated successfully!</Text>
       </Animated.View>
+      <ConfettiCannon count={120} origin={{ x: SCREEN_WIDTH / 2, y: 0 }} autoStart fadeOut />
 
-      <ConfettiCannon
-        count={120}
-        origin={{ x: SCREEN_WIDTH / 2, y: 0 }}
-        autoStart
-        fadeOut
-      />
-
-      {/* total footprint */}
       <Text style={styles.sectionHeader}>🌍 Your Carbon Footprint</Text>
       <View style={styles.totalCard}>
         <Text style={styles.totalLabel}>Total</Text>
         <Text style={styles.totalValue}>{totalValue} kg CO₂</Text>
       </View>
 
-      {/* breakdown + tips */}
       <Text style={styles.chartHeader}>📊 Breakdown</Text>
       <View style={[styles.totalCard, { alignItems: 'flex-start', padding: 22 }]}>
         <Text style={styles.totalLabel}>• Electricity  {userData.electricity} kWh</Text>
@@ -203,14 +184,11 @@ export default function CarbonResult() {
         ))}
       </View>
 
-      {/* badge */}
       <Animated.View style={[styles.badgeCard, pulseStyle]}>
         <Text style={styles.badgeText}>{badge}</Text>
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>🇺🇸 vs U.S. avg</Text>
-          <Text style={styles.statVal}>
-            {pctUS > 0 ? pctUS.toFixed(1) + '% higher' : 'Below avg ✅'}
-          </Text>
+          <Text style={styles.statVal}>{pctUS > 0 ? pctUS.toFixed(1) + '% higher' : 'Below avg ✅'}</Text>
         </View>
         <View style={styles.statRow}>
           <Text style={styles.statLabel}>🌍 Better than world</Text>
@@ -222,20 +200,16 @@ export default function CarbonResult() {
         </View>
       </Animated.View>
 
-      {/* progress toggle */}
       <TouchableOpacity style={styles.calculateButton} onPress={() => setPanelOpen(!panelOpen)}>
         <Text style={styles.buttonText}>
           {panelOpen ? 'Hide my progress' : 'Show my progress'}
         </Text>
       </TouchableOpacity>
 
-      {/* animated progress panel */}
       <Animated.View style={[{ overflow: 'hidden' }, panelStyle]}>
         {loading && <ActivityIndicator style={{ marginTop: 12 }} />}
         {!loading && history.length === 0 && (
-          <Text style={styles.emptyText}>
-            No previous footprints yet. Calculate again to start tracking!
-          </Text>
+          <Text style={styles.emptyText}>No previous footprints yet. Calculate again to start tracking!</Text>
         )}
         {!loading && history.length > 0 && (
           <>
@@ -270,7 +244,6 @@ export default function CarbonResult() {
         )}
       </Animated.View>
 
-      {/* recalculate */}
       <TouchableOpacity
         style={[styles.calculateButton, { marginTop: 18 }]}
         onPress={() => router.back()}
@@ -281,57 +254,33 @@ export default function CarbonResult() {
   );
 }
 
-/* ---------- styles ---------- */
+/* ---------- styles (unchanged except minor naming) ---------- */
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 20 },
   warningText: { color: '#FFD700', fontSize: 18, textAlign: 'center', marginBottom: 12 },
   toast: { backgroundColor: '#FFD700', padding: 10, borderRadius: 8, marginBottom: 18 },
   toastText: { textAlign: 'center', fontWeight: 'bold', color: '#001F3F' },
   sectionHeader: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    textAlign: 'center',
-    marginBottom: 18,
+    fontSize: 26, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 18,
   },
   totalCard: {
-    backgroundColor: '#FFD700',
-    padding: 20,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginBottom: 20,
+    backgroundColor: '#FFD700', padding: 20, borderRadius: 14, alignItems: 'center', marginBottom: 20,
   },
   totalLabel: { fontSize: 16, color: '#001F3F', fontWeight: '600', marginBottom: 4 },
   totalValue: { fontSize: 28, fontWeight: 'bold', color: '#001F3F' },
   chartHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    textAlign: 'center',
-    marginBottom: 8,
+    fontSize: 20, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 8,
   },
   badgeCard: {
-    backgroundColor: '#004080',
-    padding: 18,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FFD700',
-    marginBottom: 20,
+    backgroundColor: '#004080', padding: 18, borderRadius: 12, borderWidth: 1, borderColor: '#FFD700', marginBottom: 20,
   },
   badgeText: { fontSize: 20, fontWeight: 'bold', color: '#00FF99', textAlign: 'center', marginBottom: 10 },
   statRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
   statLabel: { color: '#FFD700', fontSize: 16, fontWeight: '500' },
-  statVal:   { color: '#fff', fontSize: 16, fontWeight: '600' },
-  tipBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#003366',
-    borderRadius: 10,
-    padding: 8,
-    marginTop: 8,
-  },
+  statVal: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  tipBox: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#003366', borderRadius: 10, padding: 8, marginTop: 8 },
   tipEmoji: { fontSize: 18, marginRight: 6 },
-  tipText:  { color: '#fff', flex: 1, lineHeight: 20 },
+  tipText: { color: '#fff', flex: 1, lineHeight: 20 },
   calculateButton: { backgroundColor: '#007ACC', paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   emptyText: { color: '#888', textAlign: 'center', marginTop: 14 },
