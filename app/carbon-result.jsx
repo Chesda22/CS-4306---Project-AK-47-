@@ -21,7 +21,7 @@ import Animated, {
 import { generateTips } from '../utils/tips';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
-  const CarbonResult = () => {
+const CarbonResult = () => {
   const { total, breakdown } = useLocalSearchParams();
   const screenWidth = Dimensions.get('window').width;
   const scrollRef = useRef(null);
@@ -58,40 +58,18 @@ import ConfettiCannon from 'react-native-confetti-cannon';
     );
   }
 
+  const totalValue = parseFloat(total ?? '0');
   const tips = generateTips(userData);
 
   const successOpacity = useSharedValue(0);
   const badgeScale = useSharedValue(0.8);
-
-  const totalValue = parseFloat(total ?? '0');
-    saveCarbonData({
-        electricity,
-        gasoline: gas,
-        meatConsumption: meat,
-        publicTransport: transport,
-        recycledWaste: recycle,
-        total: total.toFixed(2)
-      });
-
-  const averageAmerican = 16000;
-  const worldAverage = 4000;
-  const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
-  const percentBetterThanWorld = 100 - (totalValue / worldAverage) * 100;
-  const treesToOffset = Math.ceil(totalValue / 22);
-
-  let badge = '';
-  if (totalValue < 3000) badge = '🥇 Ultra Green Hero!';
-  else if (totalValue < 5000) badge = '🏅 Green Champion!';
-  else if (totalValue < 8000) badge = '🌱 Eco-Warrior!';
-  else if (totalValue < 12000) badge = '⚠️ Climate Aware – Room to Improve';
-  else if (totalValue < 16000) badge = '🚨 Above Average – Take Action!';
-  else badge = '🔥 High Impact – Urgent Change Needed!';
 
   useEffect(() => {
     scrollRef?.current?.scrollTo({ y: 0, animated: true });
 
     const saveToHistory = async () => {
       try {
+        // Save to AsyncStorage (optional)
         const oldHistory = await AsyncStorage.getItem('carbonHistory');
         const parsed = oldHistory ? JSON.parse(oldHistory) : [];
 
@@ -101,7 +79,17 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 
         parsed.push(newEntry);
         await AsyncStorage.setItem('carbonHistory', JSON.stringify(parsed));
-        console.log('✅ Saved entry:', newEntry);
+        console.log('✅ Saved entry to local:', newEntry);
+
+        // Save to Firebase
+        saveCarbonData({
+          electricity: userData.electricity,
+          gasoline: userData.gasoline,
+          meatConsumption: userData.meatMeals,
+          publicTransport: userData.publicTransport,
+          recycledWaste: 0,
+          total: totalValue.toFixed(2),
+        });
       } catch (e) {
         console.warn('📉 Failed to save carbon history', e);
       }
@@ -124,6 +112,20 @@ import ConfettiCannon from 'react-native-confetti-cannon';
   const badgeAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: badgeScale.value }],
   }));
+
+  const averageAmerican = 16000;
+  const worldAverage = 4000;
+  const percentAboveUS = ((totalValue - averageAmerican) / averageAmerican) * 100;
+  const percentBetterThanWorld = 100 - (totalValue / worldAverage) * 100;
+  const treesToOffset = Math.ceil(totalValue / 22);
+
+  let badge = '';
+  if (totalValue < 3000) badge = '🥇 Ultra Green Hero!';
+  else if (totalValue < 5000) badge = '🏅 Green Champion!';
+  else if (totalValue < 8000) badge = '🌱 Eco-Warrior!';
+  else if (totalValue < 12000) badge = '⚠️ Climate Aware – Room to Improve';
+  else if (totalValue < 16000) badge = '🚨 Above Average – Take Action!';
+  else badge = '🔥 High Impact – Urgent Change Needed!';
 
   return (
     <ScrollView
