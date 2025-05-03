@@ -23,7 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { db } from '../../firebaseConfig';          // ← two levels up
 import { LineChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
