@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';          // two levels up from (tabs)
+import { db } from '../../../firebaseConfig';
 import { LineChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
