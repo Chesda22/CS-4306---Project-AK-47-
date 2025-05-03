@@ -1,155 +1,90 @@
-// app/(tabs)/progress.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
-import { fetchCarbonHistory } from '../../firebaseService';
+import { useState, useEffect } from 'react';
+import { ScrollView, View, Text } from 'react-native';
+// 🔴 Add Firebase Firestore imports:
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebaseConfig';  // adjust the import to your firebase config
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+// ... your other imports (chart library, styles, etc.)
 
-const ProgressScreen = () => {
-  const [history, setHistory] = useState([]);
+export default function Progress() {
+  const [history, setHistory] = useState([]);  
+  const [chartData, setChartData] = useState({ labels: [], datasets: [{ data: [] }] });
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchCarbonHistory();
-        console.log('🔥 Raw fetched data:', data);
-
-        const cleaned = data.filter(entry => {
-          const valid =
-            typeof entry.timestamp === 'string' &&
-            !isNaN(new Date(entry.timestamp).getTime()) &&
-            !isNaN(parseFloat(entry.total));
-          if (!valid) {
-            console.warn('⚠️ Skipping invalid entry:', entry);
+    // 📡 Replace your existing fetch logic with an onSnapshot listener:
+    const footprintsQuery = query(
+      collection(db, 'footprints'),
+      orderBy('timestamp', 'desc')  // ensure we get latest entries first
+    );
+    const unsubscribe = onSnapshot(footprintsQuery, (snapshot) => {
+      const entries = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // 🕒 Convert timestamp to JavaScript Date for consistency
+        if (data.timestamp) {
+          if (typeof data.timestamp.toDate === 'function') {
+            data.timestamp = data.timestamp.toDate();
+          } else {
+            // If timestamp is stored as number or string, convert to Date
+            data.timestamp = new Date(data.timestamp);
           }
-          return valid;
-        });
+        }
+        return data;
+      });
+      setHistory(entries);
 
-        const sorted = [...cleaned].sort((a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
+      // 📝 Prepare chart data from entries
+      const labels = entries.map(entry =>
+        // format the date for the x-axis label (e.g., '12/31' or '31 Dec')
+        entry.timestamp 
+          ? entry.timestamp.toLocaleDateString() 
+          : ''
+      );
+      const totals = entries.map(entry => entry.total || 0);
+      setChartData({
+        labels,
+        datasets: [{ data: totals }]
+      });
+    });
 
-        setHistory(sorted.slice(-30).reverse());
-      } catch (err) {
-        console.error('❌ Failed to load history:', err);
-      }
-    };
+    // Clean up listener on component unmount
+    return () => unsubscribe();
+  }, []);  // empty dependency – runs once on mount
 
-    load();
-  }, []);
-
-  const chartData = {
-    labels: history.map((entry, i) => {
-      const date = new Date(entry.timestamp);
-      return i % 2 === 0 ? date.toLocaleTimeString() : '';
-    }),
-    datasets: [
-      {
-        data: history.map(entry => parseFloat(entry.total)),
-      },
-    ],
-  };
+  // 🔄 (Optional) If using a tab navigator that keeps screens mounted, 
+  // consider adding a useFocusEffect to refresh data when the tab is shown.
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Your Carbon Footprint Progress</Text>
+    <ScrollView contentContainerStyle={{ padding: 16 }}>
+      {/* 📊 Chart component */}
+      {/* (Example using react-native-chart-kit) */}
+      <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 8 }}>Carbon Footprint Over Time</Text>
+      {/* Replace the following with your actual Chart component, passing chartData */}
+      {
+        /* <LineChart
+             data={chartData}
+             width={Dimensions.get('window').width - 32}
+             height={220}
+             chartConfig={...}
+          /> 
+        */
+      }
 
-      {history.length > 0 ? (
-        <>
-          <LineChart
-            data={chartData}
-            width={SCREEN_WIDTH * 0.9}
-            height={220}
-            chartConfig={{
-              backgroundGradientFrom: '#91EAE4',
-              backgroundGradientTo: '#7F7FD5',
-              decimalPlaces: 2,
-              color: (opacity = 1) => `rgba(0, 51, 102, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              propsForDots: {
-                r: '4',
-                strokeWidth: '2',
-                stroke: '#007ACC',
-              },
-            }}
-            bezier
-            style={styles.chart}
-          />
-
-          {history.map((entry, index) => {
-            const date = new Date(entry.timestamp);
-            return (
-              <View key={index} style={styles.entry}>
-                <View>
-                  <Text style={styles.date}>{date.toLocaleDateString()}</Text>
-                  <Text style={styles.time}>{date.toLocaleTimeString()}</Text>
-                </View>
-                <Text style={styles.value}>{entry.total} kg CO₂</Text>
-              </View>
-            );
-          })}
-        </>
-      ) : (
-        <Text style={styles.noData}>No progress yet. Start calculating!</Text>
-      )}
+      {/* 🕑 History list */}
+      <Text style={{ fontSize: 18, fontWeight: '600', marginTop: 24, marginBottom: 8 }}>History</Text>
+      {history.map((entry, index) => (
+        <View 
+          key={entry.timestamp ? entry.timestamp.getTime() : index} 
+          style={{ marginBottom: 12, padding: 12, backgroundColor: '#eee', borderRadius: 8 }}
+        >
+          {/* Format timestamp nicely */}
+          <Text>Date: {entry.timestamp ? entry.timestamp.toLocaleString() : 'Unknown'}</Text>
+          <Text>Total Carbon: {entry.total ?? 0} kg CO₂</Text>
+          {/* You can also display breakdown if desired */}
+          <Text style={{ fontSize: 12, color: '#555' }}>
+            (Electricity: {entry.electricity}, Gasoline: {entry.gasoline}, Meat: {entry.meatConsumption}, Public Transport: {entry.publicTransport}, Recycled: {entry.recycledWaste})
+          </Text>
+        </View>
+      ))}
     </ScrollView>
   );
-};
-
-export default ProgressScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    paddingTop: 90,
-    paddingBottom: 300,
-    paddingHorizontal: 20,
-    backgroundColor: '#ADD8E6',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#003366',
-  },
-  noData: {
-    fontSize: 16,
-    fontStyle: 'italic',
-    color: '#555',
-    marginTop: 30,
-  },
-  chart: {
-    marginBottom: 20,
-    borderRadius: 16,
-  },
-  entry: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  date: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  time: {
-    fontSize: 12,
-    color: '#666',
-  },
-  value: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    textAlign: 'right',
-  },
-});
+}
