@@ -1,4 +1,3 @@
-// index.jsx (calculator screen with Layla UI and animated navigation)
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -41,7 +40,7 @@ const CarbonCalculator = () => {
       -1,
       true
     );
-  }, [laylaPosition]);
+  }, []);
 
   const animatedLaylaStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: laylaPosition.value }],
@@ -66,7 +65,8 @@ const CarbonCalculator = () => {
       electricity: electricityValue,
       gasoline: gasolineValue,
       meatMeals: meatValue,
-      publicTransport: transportValue
+      publicTransport: transportValue,
+      recycledWaste: recycledValue  // ✅ ADDED
     };
 
     router.push({
