@@ -14,8 +14,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
@@ -25,7 +25,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="index"                    // Carbon Calculator
         options={{
           title: 'Carbon Calculator',
           tabBarIcon: ({ color }) => (
@@ -33,8 +33,9 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
-        name="explore"
+        name="explore"                  // Explore resources
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => (
@@ -42,15 +43,8 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="progress"
-        options={{
-          title: 'Progress',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="chart.bar.fill" color={color} />
-          ),
-        }}
-      />
+
+      {/* 🚫 Progress tab removed */}
     </Tabs>
   );
 }
