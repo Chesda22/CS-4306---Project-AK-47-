@@ -78,7 +78,7 @@ const CarbonResult = () => {
           publicTransport: userData.publicTransport,
           recycledWaste: 0,
           total: totalValue.toFixed(2),
-          timestamp: now.toISOString(), // ✅ standardized format
+          timestamp: now.getTime(), // Save as number
         };
 
         await saveCarbonData(payload);
