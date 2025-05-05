@@ -1,64 +1,44 @@
 import React, { memo } from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions } from 'react-native';
 import WheelPickerExpo from 'react-native-wheel-picker-expo';
 import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 /**
- * NumberWheel — reusable scroll wheel with bigger, clearer numbers.
- * – Haptics enabled
- * – Optional slide / fade entrance animation
+ * NumberWheel — simplified version using WheelPickerExpo's built‑in textStyle prop.
+ * Enlarges numbers without a custom renderItem (avoids undefined error).
  */
 export default memo(function NumberWheel({
   range,
   value,
   onChange,
   enterAnimation = 'fade',
-  wheelHeight = 120, // total wheel height
-  fontSize = 22,     // number font size
+  wheelHeight = 120,
+  fontSize = 24, // bigger font via textStyle
 }) {
-  // Convert range to WheelPickerExpo item objects
   const items = range.map(n => ({ label: String(n), value: n }));
   const selectedIndex = Math.max(range.indexOf(Number(value)), 0);
 
-  // Choose entrance animation flavour
   const entering =
     enterAnimation === 'slide'
       ? SlideInUp.springify().damping(12)
       : FadeIn.duration(600);
 
-  /**
-   * Custom row renderer — keeps each row compact while enlarging text.
-   * The wheel library sizes rows automatically; we just style the text.
-   */
-  const renderItem = ({ item }) => (
-    <View style={{ height: 44, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontSize, fontWeight: '600', color: '#333' }}>{item.label}</Text>
-    </View>
-  );
-
   return (
     <Animated.View entering={entering} style={{ alignSelf: 'center' }}>
-      <View
-        style={{
-          borderRadius: 8,
-          overflow: 'hidden',
-          width: SCREEN_WIDTH * 0.8,
-        }}
-      >
-        <WheelPickerExpo
-          haptics
-          height={wheelHeight}
-          width={SCREEN_WIDTH * 0.8}
-          backgroundColor="transparent"   /* allow card colour to show */
-          items={items}
-          initialSelectedIndex={selectedIndex}
-          selectedStyle={{ borderColor: '#16c784', borderWidth: 2 }}
-          onChange={({ item }) => onChange(String(item.label))}
-          renderItem={renderItem}
-        />
-      </View>
+      <WheelPickerExpo
+        haptics
+        height={wheelHeight}
+        width={SCREEN_WIDTH * 0.8}
+        backgroundColor="transparent"
+        items={items}
+        initialSelectedIndex={selectedIndex}
+        selectedStyle={{ borderColor: '#16c784', borderWidth: 2 }}
+        onChange={({ item }) => onChange(String(item.label))}
+        textStyle={{ fontSize, fontWeight: '600', color: '#333' }}
+        selectedTextStyle={{ fontSize: fontSize + 2, fontWeight: '700', color: '#000' }}
+      />
     </Animated.View>
   );
 });
