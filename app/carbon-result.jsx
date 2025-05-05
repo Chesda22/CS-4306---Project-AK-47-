@@ -26,7 +26,6 @@ import {
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp,
   getDocs,
   writeBatch,
   doc,
@@ -45,7 +44,7 @@ export default function CarbonResult() {
   const { total, breakdown } = useLocalSearchParams();
   const isDark = useColorScheme() === 'dark';
 
-  // Parse breakdown
+  /* ───── parse breakdown ───── */
   let userData = null;
   try {
     userData = typeof breakdown === 'string' ? JSON.parse(breakdown) : breakdown;
@@ -67,15 +66,14 @@ export default function CarbonResult() {
     );
   }
 
+  /* ───── derived values & save ───── */
   const totalValue = Number(total) || 0;
   const tips = generateTips(userData);
-
-  // Save once
   useEffect(() => {
     saveFootprint({ total: totalValue.toFixed(2), breakdown: userData });
   }, []);
 
-  /* animations */
+  /* ───── toast / badge animations ───── */
   const fade = useSharedValue(0);
   const pulse = useSharedValue(0.85);
   useEffect(() => {
@@ -89,7 +87,7 @@ export default function CarbonResult() {
   const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
-  /* history */
+  /* ───── history listener ───── */
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState([]);
   const [chartData, setChartData] = useState({ labels: [], datasets: [{ data: [] }] });
@@ -113,7 +111,7 @@ export default function CarbonResult() {
     return () => unsub();
   }, []);
 
-  /* clear */
+  /* ───── clear history ───── */
   const [clearing, setClearing] = useState(false);
   const clearHistory = async () => {
     setClearing(true);
@@ -130,7 +128,7 @@ export default function CarbonResult() {
     }
   };
 
-  /* badge */
+  /* ───── badge text ───── */
   const avgUS = 16000;
   const worldAvg = 4000;
   const pctUS = ((totalValue - avgUS) / avgUS) * 100;
@@ -143,9 +141,11 @@ export default function CarbonResult() {
   else if (totalValue < 12000) badge = '⚠️ Climate Aware – Room to Improve';
   else if (totalValue < 16000) badge = '🚨 Above Average – Take Action!';
 
-  /* UI */
+  /* ───── UI ───── */
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: isDark ? '#000' : '#001F3F' }]}>
+    <ScrollView
+      contentContainerStyle={[styles.container, { backgroundColor: isDark ? '#000' : '#001F3F' }]}
+    >
       {/* Toast */}
       <Animated.View style={[styles.toast, fadeStyle]}>
         <Text style={styles.toastText}>🎉 Footprint saved!</Text>
@@ -161,7 +161,8 @@ export default function CarbonResult() {
 
       {/* Breakdown */}
       <Text style={styles.sub}>📊 Breakdown</Text>
-      <View style={[styles.totalCard, { alignItems: 'flex-start', padding: 22 }]}>
+      <View style={[styles.totalCard, { alignItems: 'flex-start', padding: 22 }]}
+      >
         <Text style={styles.totalLbl}>• Electricity {userData.electricity}</Text>
         <Text style={styles.totalLbl}>• Gasoline {userData.gasoline}</Text>
         <Text style={styles.totalLbl}>• Meat meals {userData.meatMeals}</Text>
@@ -193,19 +194,97 @@ export default function CarbonResult() {
         </View>
       </Animated.View>
 
-      {/* Chart toggle */}
+      {/* Toggle progress */}
       <TouchableOpacity style={styles.btn} onPress={() => setLoading(!loading)}>
         <Text style={styles.btnText}>{loading ? 'Show progress' : 'Hide progress'}</Text>
       </TouchableOpacity>
 
-      {/* Chart */}
+      {/* Line chart */}
       {!loading && history.length > 0 && (
         <LineChart
           data={chartData}
           width={SCREEN_WIDTH - 32}
           height={200}
-          yAxisSuffix=" kg"
+          yAxisSuffix=" kg"
           bezier
           chartConfig={{
             backgroundGradientFrom: isDark ? '#000' : '#fff',
-            backgroundGradientTo: isDark ? '#000
+            backgroundGradientTo: isDark ? '#000' : '#fff',
+            decimalPlaces: 0,
+            color: (o) => `rgba(0,200,83,${o})`,
+            labelColor: () => (isDark ? '#fff' : '#000'),
+            propsForDots: { r: '4' },
+          }}
+          style={{ marginVertical: 8, borderRadius: 8 }}
+        />
+      )}
+      {loading && <ActivityIndicator style={{ marginTop: 12 }} />}
+
+      {/* History list */}
+      {!loading &&
+        history.map((h, i) => (
+          <View key={h.timestamp?.getTime?.() ?? i} style={styles.historyCard}>
+            <Text style={styles.historyMain}>
+              {h.timestamp.toLocaleString()} — {h.total} kg
+            </Text>
+            <Text style={styles.historySmall}>
+              Elec {h.electricity}, Gas {h.gasoline}, Meat {h.meatConsumption}
+            </Text>
+          </View>
+        ))}
+
+      {/* Clear button */}
+      <TouchableOpacity
+        style={[styles.btn, { backgroundColor: '#b30000' }]}
+        onPress={clearHistory}
+        disabled={clearing}
+      >
+        <Text style={styles.btnText}>{clearing ? 'Clearing…' : '🗑  Clear History'}</Text>
+      </TouchableOpacity>
+
+      {/* Recalculate */}
+      <TouchableOpacity style={[styles.btn, { marginTop: 12 }]} onPress={() => router.back()}>
+        <Text style={styles.btnText}>🔄 Calculate Again</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+/* ---- styles ---- */
+const styles = StyleSheet.create({
+  container: { flexGrow: 1, padding: 20 },
+  warning: { color: '#FFD700', fontSize: 18, textAlign: 'center', marginBottom: 12 },
+  toast: { backgroundColor: '#FFD700', padding: 10, borderRadius: 8, marginBottom: 18 },
+  toastText: { textAlign: 'center', fontWeight: 'bold', color: '#001F3F' },
+  section: { fontSize: 26, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 18 },
+  totalCard: {
+    backgroundColor: '#FFD700',
+    padding: 20,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  totalLbl: { fontSize: 16, color: '#001F3F', fontWeight: '600' },
+  totalVal: { fontSize: 28, fontWeight: 'bold', color: '#001F3F' },
+  sub: { fontSize: 20, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 8 },
+  badgeCard: {
+    backgroundColor: '#004080',
+    padding: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    marginBottom: 20,
+  },
+  badgeText: { color: '#00FF99', fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
+  statRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  statLbl: { color: '#FFD700', fontSize: 16, fontWeight: '500' },
+  statVal: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  tipBox: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#003366', borderRadius: 10, padding: 8, marginTop: 8 },
+  tipEmoji: { fontSize: 18, marginRight: 6 },
+  tipText: { color: '#fff', flex: 1, lineHeight: 20 },
+  btn: { backgroundColor: '#007ACC', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 10 },
+  btnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  historyCard: { backgroundColor: '#00224d', borderRadius: 8, padding: 10, marginBottom: 6 },
+  historyMain: { color: '#fff', fontWeight: '600' },
+  historySmall: { color: '#ccc', fontSize: 12 },
+});
